@@ -18,6 +18,13 @@ vi.mock("./lib/supabase", () => ({
   },
 }));
 
+// Mock MapView — Leaflet virker ikke i jsdom (kræver rigtig DOM med layout)
+vi.mock("./features/map/MapView", () => ({
+  default: ({ children }: { children?: React.ReactNode }) => (
+    <div data-testid="map-view">{children}</div>
+  ),
+}));
+
 function renderWithProviders(route: string) {
   return render(
     <MemoryRouter initialEntries={[route]}>
@@ -36,9 +43,7 @@ describe("App", () => {
 
   it("vísir kortsíðuna við /kort rute", () => {
     renderWithProviders("/kort");
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Kort" }),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("map-view")).toBeInTheDocument();
   });
 
   it("vísir login-síðuna við /login rute", () => {

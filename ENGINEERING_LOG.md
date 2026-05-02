@@ -103,3 +103,50 @@ Denne log dokumenterer alle vigtige beslutninger, ændringer og fremskridt i pro
 **Næste skridt (Fase 3):**
 - Leaflet-kort med GPS-tracking
 - Live position-deling mellem gruppemedlemmer
+
+---
+
+## 2026-05-02 — Fase 3: Interaktivt kort med GPS og live positionsdeling
+
+**Hvad:** Interaktivt kort med Leaflet, brugerens GPS-position og live positionsdeling mellem gruppemedlemmer via Supabase Realtime.
+
+**Beslutninger:**
+- **Leaflet** via react-leaflet — simpelt, veldokumenteret, godt nok til MVP. MapLibre er overkill her
+- **OpenTopoMap** tiles — viser højdekurver og terræn, vigtigt for bjergterræn på Færøerne
+- **CircleMarker** i stedet for standard Marker — undgår et kendt Leaflet-ikonproblem med bundlers (Vite)
+- **Supabase Realtime** for live positioner — bruger eksisterende Supabase-opsætning, ingen ekstra server
+- **5-sekunders throttling** på GPS-opdateringer til databasen — sparer batteri og database
+- **Stale-filtrering** — positioner ældre end 5 minutter filtreres automatisk væk
+- **Kortet er offentligt** — alle kan se kortet, men GPS-deling kræver login
+- **Numeriske fejlkoder** i useGeolocation — `GeolocationPositionError`-konstanter eksisterer ikke i jsdom-testmiljø, så vi bruger de numeriske værdier (1, 2, 3) direkte
+
+**Nye filer (8 stk):**
+- `src/features/map/MapView.tsx` — Leaflet MapContainer med OpenTopoMap tiles, centreret på Færøerne
+- `src/features/map/LocationMarker.tsx` — Brugerens GPS-position (blå CircleMarker + nøjagtighedscirkel, flyTo ved første fix)
+- `src/features/map/GroupMembersLayer.tsx` — Andre medlemmers positioner (røde CircleMarker med permanente Tooltip)
+- `src/features/map/GroupSelector.tsx` — Dropdown overlay til at vælge aktiv gruppe, auto-vælger første
+- `src/features/map/useGeolocation.ts` — Hook der wrapper browser Geolocation API med færøske fejlmeddelelser
+- `src/features/map/useGroupLocations.ts` — Hook for Supabase upsert (throttled) + Realtime subscription + cleanup
+- `src/features/map/useGeolocation.test.ts` — 6 unit-tests for GPS-hooken (position, fejl, cleanup, manglende API)
+- `supabase/migrations/002_locations.sql` — locations-tabel med composite PK, RLS-policies og Realtime
+
+**Ændrede filer (5 stk):**
+- `package.json` — +leaflet, +react-leaflet, +@types/leaflet
+- `src/types/database.ts` — +Location interface
+- `src/features/map/MapPage.tsx` — Erstattet placeholder med rigtigt kort, GPS-status, gruppevælger, login-opfordring
+- `src/components/Layout.tsx` — Fuld bredde/højde for /kort, skjult footer, bruger useLocation()
+- `src/index.css` — +leaflet container height/width fix
+- `src/App.test.tsx` — Mock MapView (Leaflet virker ikke i jsdom), opdateret kort-test til data-testid
+
+**Verifikation:**
+- `npm run build` bygger uden fejl (chunk-størrelses-advarsel for Leaflet er forventet)
+- `npm run test` kører 10 tests der alle består (4 App + 6 useGeolocation)
+- Kortet viser Færøerne med topografiske tiles
+- GPS-position vises som blå prik med nøjagtighedscirkel
+- Gruppevælger viser brugerens grupper
+- Andre gruppemedlemmers positioner vises som røde prikker med navne
+- Login-opfordring vises for ikke-loggede brugere
+
+**Næste skridt (Fase 4):**
+- Fåre-markering på kortet
+- Ordrer og anvisninger

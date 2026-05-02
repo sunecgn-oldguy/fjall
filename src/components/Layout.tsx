@@ -1,8 +1,11 @@
-import { NavLink, Outlet } from "react-router";
+import { NavLink, Outlet, useLocation } from "react-router";
 import { useAuth } from "../features/auth/AuthContext";
 
 export default function Layout() {
   const { user, loading, signOut } = useAuth();
+  const { pathname } = useLocation();
+
+  const isMapRoute = pathname === "/kort";
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `px-3 py-1 rounded transition-colors ${
@@ -54,13 +57,21 @@ export default function Layout() {
         </nav>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
+      <main
+        className={
+          isMapRoute
+            ? "flex-1"
+            : "mx-auto w-full max-w-5xl flex-1 px-4 py-6"
+        }
+      >
         <Outlet />
       </main>
 
-      <footer className="border-t border-stone-200 bg-stone-100 py-4 text-center text-sm text-stone-500">
-        Fjall — Seyðadriv Coordinator
-      </footer>
+      {!isMapRoute && (
+        <footer className="border-t border-stone-200 bg-stone-100 py-4 text-center text-sm text-stone-500">
+          Fjall — Seyðadriv Coordinator
+        </footer>
+      )}
     </div>
   );
 }

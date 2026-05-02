@@ -21,3 +21,15 @@ export interface GroupMember {
   role: "admin" | "member";
   joined_at: string;
 }
+
+/** Live GPS-position for en bruger i en gruppe */
+export interface Location {
+  user_id: string;
+  group_id: string;
+  latitude: number;
+  longitude: number;
+  accuracy: number | null;
+  heading: number | null;
+  speed: number | null;
+  updated_at: string;
+}
