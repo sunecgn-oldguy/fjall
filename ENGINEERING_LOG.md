@@ -243,5 +243,53 @@ Denne log dokumenterer alle vigtige beslutninger, ændringer og fremskridt i pro
 - Auto-scroll virker ved nye beskeder
 
 **Næste skridt (Fase 6):**
-- Push-notifikationer (PWA)
-- Offline-support
+- PWA — installerbar app
+
+---
+
+## 2026-05-02 — Fase 6: PWA (installerbar app)
+
+**Hvad:** Gjort appen installerbar som PWA — brugere kan tilføje den til hjemmeskærmen og få en app-lignende oplevelse med fuld skærm og cached assets.
+
+**Beslutninger:**
+- **vite-plugin-pwa** med `generateSW` — automatisk genereret service worker, ingen custom SW-kode. Simpelt og vedligeholdelsesfrit
+- **`registerType: "autoUpdate"`** — service workeren opdaterer sig selv automatisk ved nye deploys. Brugere får altid nyeste version
+- **Precache statiske assets** (JS, CSS, HTML, ikoner) — app-skallen indlæses fra cache = hurtig start
+- **Runtime caching af korttiles** — OpenTopoMap tiles caches med CacheFirst-strategi (max 500 tiles, 30 dages levetid)
+- **Ingen Supabase API-caching** — realtime-data skal altid være frisk, WebSockets går ikke gennem service worker
+- **Ikon-generering** med `sharp` — simpel SVG med "F" på stone-800 baggrund, konverteret til PNG i 3 størrelser
+- **Farvetema:** `#292524` (stone-800, headerens farve) som theme-color og ikon-baggrund
+- **`--legacy-peer-deps`** ved installation — vite-plugin-pwa 1.2.0 deklarerer kun support for Vite ≤7, men virker med Vite 8 da plugin-API'et er stabilt
+- **`@testing-library/dom`** tilføjet som devDependency — manglende peer dep der forårsagede TypeScript build-fejl
+
+**Hvad der IKKE er med:**
+- Push-notifikationer (kræver server-side VAPID-nøgler og Edge Functions)
+- Fuld offline-mode med synkroniseringskø
+- Background sync
+- Custom offline-side
+
+**Nye filer (4 stk):**
+- `scripts/generate-icons.mjs` — Node-script der genererer PNG-ikoner fra SVG via sharp
+- `public/pwa-192x192.png` — PWA-ikon 192×192 (Android/Chrome)
+- `public/pwa-512x512.png` — PWA-ikon 512×512 (splash screen + maskable)
+- `public/apple-touch-icon-180x180.png` — Apple touch-ikon 180×180 (iOS Safari)
+
+**Ændrede filer (3 stk):**
+- `package.json` — +vite-plugin-pwa, +sharp, +@testing-library/dom (devDependencies)
+- `vite.config.ts` — +VitePWA plugin med manifest, workbox precaching og tile-caching
+- `index.html` — +PWA metatags (description, theme-color, apple-touch-icon)
+
+**Service Worker konfiguration:**
+- Precache: `**/*.{js,css,html,ico,png,svg,woff,woff2}` — 11 entries (657 KiB)
+- Runtime cache: `tile.opentopomap.org` tiles med CacheFirst (max 500, 30 dage)
+- Manifest: standalone display, færøsk description, 3 ikoner (192, 512, 512 maskable)
+
+**Verifikation:**
+- `npm run build` bygger uden fejl og genererer `dist/sw.js` + `dist/manifest.webmanifest`
+- `npm run test` kører 10 tests der alle består
+- 3 PWA-ikoner genereret i `public/`
+- Appen er installerbar via Chrome DevTools → Application
+
+**Næste skridt:**
+- Push-notifikationer (separat fase)
+- Eventuelt offline-support med synkroniseringskø
