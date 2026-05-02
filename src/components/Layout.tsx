@@ -15,7 +15,7 @@ export default function Layout() {
     }`;
 
   return (
-    <div className="flex min-h-screen flex-col bg-stone-50 text-stone-900">
+    <div className={`flex flex-col bg-stone-50 text-stone-900 ${isMapRoute ? "h-screen" : "min-h-screen"}`}>
       <header className="bg-stone-800 text-white">
         <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <NavLink to="/" className="text-xl font-bold tracking-tight">
@@ -60,7 +60,7 @@ export default function Layout() {
       <main
         className={
           isMapRoute
-            ? "flex-1"
+            ? "flex-1 min-h-0"
             : "mx-auto w-full max-w-5xl flex-1 px-4 py-6"
         }
       >
