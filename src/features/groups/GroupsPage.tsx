@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import Spinner from "../../components/Spinner";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
 import type { Group } from "../../types/database";
@@ -49,7 +50,12 @@ export default function GroupsPage() {
   }
 
   if (loading) {
-    return <p className="text-stone-500">Innlesur bólkar...</p>;
+    return (
+      <div className="flex items-center gap-3 py-8 justify-center">
+        <Spinner />
+        <p className="text-stone-500">Innlesur bólkar...</p>
+      </div>
+    );
   }
 
   return (

@@ -293,3 +293,54 @@ Denne log dokumenterer alle vigtige beslutninger, ændringer og fremskridt i pro
 **Næste skridt:**
 - Push-notifikationer (separat fase)
 - Eventuelt offline-support med synkroniseringskø
+
+---
+
+## 2026-05-02 — Fase 7: UI-polish & Deploy
+
+**Hvad:** Visuel finpudsning og forberedelse til præsentation — loading-spinnere, hover-states, fokusring, bekræftelses-dialoger, offline-indikator og Vercel-deploy.
+
+**Beslutninger:**
+- **CSS-only spinner** med Tailwind `animate-spin` — ingen ekstra bibliotek, minimal bundle-impact
+- **`focus-visible`** i stedet for `:focus` — viser kun fokusring ved tastaturnavigation, ikke mus/touch
+- **Hover-states** ét trin lysere end base, active ét trin mørkere — visuelt konsistent hierarki
+- **48px kompasknapper** (h-12 w-12) — Apple anbefaler minimum 44pt touch target, vigtigt med handsker
+- **`window.confirm()`** til bekræftelse — React-portaler spiller dårligt sammen med Leaflet Popups, så en custom modal er ikke praktisk
+- **OfflineBanner** med `navigator.onLine` + events — simpelt og pålideligt, ingen polling
+- **Ingen hamburger-menu** — 4-5 korte nav-links passer på 320px, hamburger gemmer navigation bag ekstra tryk
+- **Ingen dark mode** — appen bruges udendørs i dagslys
+- **Ingen toast-notifikationer** — kræver notification-system, over-engineering for nu
+- **Ingen panel-animationer** — kræver mount/unmount-logik, minimal UX-gevinst
+
+**Nye filer (2 stk):**
+- `src/components/Spinner.tsx` — Genbrugelig loading-spinner med size-prop ("sm" til knapper, "default" standalone)
+- `src/components/OfflineBanner.tsx` — Gul banner der vises øverst når internet mangler
+
+**Ændrede filer (11 stk):**
+- `src/index.css` — Global `focus-visible` regel (stone-600, 2px outline)
+- `src/components/Layout.tsx` — Import og render `<OfflineBanner />` efter header
+- `src/features/auth/ProtectedRoute.tsx` — Erstattet "Innlesur..." tekst med centreret Spinner
+- `src/features/auth/LoginPage.tsx` — Spinner i submit-knap under loading
+- `src/features/auth/RegisterPage.tsx` — Spinner i submit-knap under loading
+- `src/features/groups/GroupsPage.tsx` — Spinner + tekst i loading-state
+- `src/features/chat/ChatPage.tsx` — Spinner i send-knap under sending
+- `src/features/map/MapActionButton.tsx` — Hover-states på alle 3 knapper
+- `src/features/map/AddSightingPanel.tsx` — Hover-states + kompasknapper forstørret til 48px
+- `src/features/map/AddOrderPanel.tsx` — Hover-states på Angra og Send
+- `src/features/map/SheepSightingsLayer.tsx` — Hover-state + confirm på Liðugt
+- `src/features/map/OrdersLayer.tsx` — Hover-states + confirm på Liðugt og Strika
+
+**Verifikation:**
+- `npm run build` bygger uden fejl (chunk-størrelses-advarsel for Leaflet er forventet)
+- `npm run test` kører 10 tests der alle består
+- Spinner vises ved loading states (ProtectedRoute, GroupsPage, Login, Register, Chat)
+- Fokusring synlig ved Tab-navigation, skjult ved mus
+- Alle knapper har hover-effekt
+- Kompasknapper er 48px (h-12 w-12)
+- `window.confirm()` vises ved Liðugt (sightings + orders) og Strika (orders)
+- Offline-banner vises når internet slås fra
+
+**Næste skridt:**
+- Deploy til Vercel (kræver brugerens GitHub-repo tilslutning)
+- Push-notifikationer (separat fase)
+- Eventuelt offline-support med synkroniseringskø

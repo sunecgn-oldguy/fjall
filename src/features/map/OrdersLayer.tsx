@@ -70,22 +70,30 @@ export default function OrdersLayer({
                   {o.status === "pending" && (
                     <button
                       onClick={() => onAccept(o.id)}
-                      className="w-full rounded bg-orange-500 px-3 py-2 text-sm font-medium text-white active:bg-orange-600"
+                      className="w-full rounded bg-orange-500 px-3 py-2 text-sm font-medium text-white hover:bg-orange-400 active:bg-orange-600"
                     >
                       Góðtak
                     </button>
                   )}
                   {o.status === "accepted" && (
                     <button
-                      onClick={() => onComplete(o.id)}
-                      className="w-full rounded bg-green-600 px-3 py-2 text-sm font-medium text-white active:bg-green-700"
+                      onClick={() => {
+                        if (window.confirm("Markera hesa ávísing sum liðuga?")) {
+                          onComplete(o.id);
+                        }
+                      }}
+                      className="w-full rounded bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500 active:bg-green-700"
                     >
                       Liðugt
                     </button>
                   )}
                   <button
-                    onClick={() => onCancel(o.id)}
-                    className="w-full rounded border border-stone-300 px-3 py-2 text-sm font-medium text-stone-600 active:bg-stone-50"
+                    onClick={() => {
+                      if (window.confirm("Ert tú vís/ur? Hetta strikar ávísingina.")) {
+                        onCancel(o.id);
+                      }
+                    }}
+                    className="w-full rounded border border-stone-300 px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-50 active:bg-stone-100"
                   >
                     Strika
                   </button>

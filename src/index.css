@@ -7,6 +7,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Fokusring ved tastaturnavigation — vises IKKE ved mus/touch */
+:focus-visible {
+  outline: 2px solid #57534e; /* stone-600 */
+  outline-offset: 2px;
+}
+
 /* Leaflet-kortet skal fylde sin container */
 .leaflet-container {
   height: 100%;

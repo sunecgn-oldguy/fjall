@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation } from "react-router";
 import { useAuth } from "../features/auth/AuthContext";
+import OfflineBanner from "./OfflineBanner";
 
 export default function Layout() {
   const { user, loading, signOut } = useAuth();
@@ -61,6 +62,8 @@ export default function Layout() {
           </div>
         </nav>
       </header>
+
+      <OfflineBanner />
 
       <main
         className={

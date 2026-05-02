@@ -1,4 +1,5 @@
 import { Navigate, Outlet } from "react-router";
+import Spinner from "../../components/Spinner";
 import { useAuth } from "./AuthContext";
 
 /**
@@ -12,7 +13,7 @@ export default function ProtectedRoute() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-stone-500">Innlesur...</p>
+        <Spinner />
       </div>
     );
   }

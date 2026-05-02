@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import Spinner from "../../components/Spinner";
 import { useAuth } from "../auth/AuthContext";
 import GroupSelector from "../map/GroupSelector";
 import MessageBubble from "./MessageBubble";
@@ -94,7 +95,7 @@ export default function ChatPage() {
             disabled={!input.trim() || sending}
             className="rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
           >
-            Send
+            {sending ? <Spinner size="sm" /> : "Send"}
           </button>
         </form>
       )}

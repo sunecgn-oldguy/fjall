@@ -33,14 +33,14 @@ export default function MapActionButton({
         <div className="flex flex-col gap-2">
           <button
             onClick={handleSighting}
-            className="flex h-12 items-center gap-2 rounded-full bg-green-600 px-4 text-sm font-medium text-white shadow-lg active:bg-green-700"
+            className="flex h-12 items-center gap-2 rounded-full bg-green-600 px-4 text-sm font-medium text-white shadow-lg hover:bg-green-500 active:bg-green-700"
           >
             <span className="text-lg">🐑</span>
             Merkja seyðir
           </button>
           <button
             onClick={handleOrder}
-            className="flex h-12 items-center gap-2 rounded-full bg-orange-500 px-4 text-sm font-medium text-white shadow-lg active:bg-orange-600"
+            className="flex h-12 items-center gap-2 rounded-full bg-orange-500 px-4 text-sm font-medium text-white shadow-lg hover:bg-orange-400 active:bg-orange-600"
           >
             <span className="text-lg">📍</span>
             Gev ávísing
@@ -53,8 +53,8 @@ export default function MapActionButton({
         onClick={() => setOpen(!open)}
         className={`flex h-14 w-14 items-center justify-center rounded-full text-2xl font-bold text-white shadow-lg transition-transform ${
           open
-            ? "rotate-45 bg-stone-600 active:bg-stone-700"
-            : "bg-stone-800 active:bg-stone-900"
+            ? "rotate-45 bg-stone-600 hover:bg-stone-500 active:bg-stone-700"
+            : "bg-stone-800 hover:bg-stone-700 active:bg-stone-900"
         }`}
         aria-label={open ? "Lat aftur" : "Nýtt"}
       >

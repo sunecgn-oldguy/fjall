@@ -52,7 +52,7 @@ export default function AddSightingPanel({
         <div className="flex items-center justify-center gap-4">
           <button
             onClick={() => setCount((c) => Math.max(1, c - 1))}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-100 text-2xl font-bold text-stone-700 active:bg-stone-200"
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-100 text-2xl font-bold text-stone-700 hover:bg-stone-200 active:bg-stone-300"
           >
             -
           </button>
@@ -61,7 +61,7 @@ export default function AddSightingPanel({
           </span>
           <button
             onClick={() => setCount((c) => c + 1)}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-100 text-2xl font-bold text-stone-700 active:bg-stone-200"
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-100 text-2xl font-bold text-stone-700 hover:bg-stone-200 active:bg-stone-300"
           >
             +
           </button>
@@ -80,10 +80,10 @@ export default function AddSightingPanel({
               onClick={() =>
                 setDirection((prev) => (prev === d.value ? null : d.value))
               }
-              className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium ${
+              className={`flex h-12 w-12 items-center justify-center rounded-full text-base font-medium ${
                 direction === d.value
                   ? "bg-green-600 text-white"
-                  : "bg-stone-100 text-stone-700 active:bg-stone-200"
+                  : "bg-stone-100 text-stone-700 hover:bg-stone-200 active:bg-stone-300"
               }`}
             >
               {d.label}
@@ -110,13 +110,13 @@ export default function AddSightingPanel({
       <div className="flex gap-3">
         <button
           onClick={onCancel}
-          className="flex-1 rounded-lg border border-stone-300 px-4 py-3 text-sm font-medium text-stone-600 active:bg-stone-50"
+          className="flex-1 rounded-lg border border-stone-300 px-4 py-3 text-sm font-medium text-stone-600 hover:bg-stone-50 active:bg-stone-100"
         >
           Angra
         </button>
         <button
           onClick={handleSubmit}
-          className="flex-1 rounded-lg bg-green-600 px-4 py-3 text-sm font-medium text-white active:bg-green-700"
+          className="flex-1 rounded-lg bg-green-600 px-4 py-3 text-sm font-medium text-white hover:bg-green-500 active:bg-green-700"
         >
           Goym
         </button>

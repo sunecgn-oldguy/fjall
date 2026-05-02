@@ -107,14 +107,14 @@ export default function AddOrderPanel({
       <div className="flex gap-3">
         <button
           onClick={onCancel}
-          className="flex-1 rounded-lg border border-stone-300 px-4 py-3 text-sm font-medium text-stone-600 active:bg-stone-50"
+          className="flex-1 rounded-lg border border-stone-300 px-4 py-3 text-sm font-medium text-stone-600 hover:bg-stone-50 active:bg-stone-100"
         >
           Angra
         </button>
         <button
           onClick={handleSubmit}
           disabled={!message.trim()}
-          className="flex-1 rounded-lg bg-orange-500 px-4 py-3 text-sm font-medium text-white active:bg-orange-600 disabled:opacity-40"
+          className="flex-1 rounded-lg bg-orange-500 px-4 py-3 text-sm font-medium text-white hover:bg-orange-400 active:bg-orange-600 disabled:opacity-40"
         >
           Send
         </button>

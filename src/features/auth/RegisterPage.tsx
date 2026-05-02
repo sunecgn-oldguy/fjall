@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router";
+import Spinner from "../../components/Spinner";
 import { useAuth } from "./AuthContext";
 
 export default function RegisterPage() {
@@ -97,7 +98,7 @@ export default function RegisterPage() {
           disabled={submitting}
           className="w-full rounded bg-stone-800 px-4 py-2 font-medium text-white hover:bg-stone-700 disabled:opacity-50"
         >
-          {submitting ? "Bíða..." : "Stovna kontu"}
+          {submitting ? <><Spinner size="sm" /> Bíða...</> : "Stovna kontu"}
         </button>
       </form>
 

@@ -100,8 +100,12 @@ export default function SheepSightingsLayer({
                   {s.display_name}
                 </p>
                 <button
-                  onClick={() => onResolve(s.id)}
-                  className="mt-2 w-full rounded bg-green-600 px-3 py-2 text-sm font-medium text-white active:bg-green-700"
+                  onClick={() => {
+                    if (window.confirm("Markera hesa athugan sum liðuga?")) {
+                      onResolve(s.id);
+                    }
+                  }}
+                  className="mt-2 w-full rounded bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500 active:bg-green-700"
                 >
                   Liðugt
                 </button>
