@@ -55,16 +55,21 @@ export function useGroupLocations(
     if (now - lastSentRef.current < THROTTLE_MS) return;
     lastSentRef.current = now;
 
-    supabase.from("locations").upsert({
-      user_id: userId,
-      group_id: groupId,
-      latitude: position.latitude,
-      longitude: position.longitude,
-      accuracy: position.accuracy,
-      heading: position.heading,
-      speed: position.speed,
-      updated_at: new Date().toISOString(),
-    });
+    supabase
+      .from("locations")
+      .upsert({
+        user_id: userId,
+        group_id: groupId,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracy: position.accuracy,
+        heading: position.heading,
+        speed: position.speed,
+        updated_at: new Date().toISOString(),
+      })
+      .then(({ error }) => {
+        if (error) console.error("Location upsert fejl:", error.message);
+      });
   }, [groupId, userId, position]);
 
   // Initial fetch + Realtime subscription
@@ -176,7 +181,8 @@ export function useGroupLocations(
         .from("locations")
         .delete()
         .eq("user_id", userId)
-        .eq("group_id", groupId!);
+        .eq("group_id", groupId!)
+        .then();
     };
   }, [groupId, userId, fetchDisplayName]);
 
