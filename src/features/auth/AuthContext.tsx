@@ -11,6 +11,7 @@ import { supabase } from "../../lib/supabase";
 interface AuthState {
   user: User | null;
   loading: boolean;
+  quickStart: (displayName: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (
     email: string,
@@ -43,6 +44,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  async function quickStart(displayName: string) {
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (error) return { error: error.message };
+    if (!data.user) return { error: "Ongin brúkari varð stovnaður." };
+
+    // Profilrækken oprettes automatisk af DB-triggeren med "Brúkari".
+    // Overskriv med det rigtige navn.
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ display_name: displayName })
+      .eq("id", data.user.id);
+
+    if (profileError) return { error: profileError.message };
+    return { error: null };
+  }
+
   async function signIn(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -69,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, quickStart, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

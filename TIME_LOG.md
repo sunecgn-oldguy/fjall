@@ -11,3 +11,4 @@ Estimeret tidsforbrug per arbejdssession.
 | 2026-05-02 | Fase 5: Skilaboð (gruppechat) | 1 time | SQL-migration, useMessages hook, ChatPage, MessageBubble, routing, navigation |
 | 2026-05-02 | Fase 6: PWA (installerbar app) | 30 min | vite-plugin-pwa, ikongenerering, manifest, tile-caching, metatags |
 | 2026-05-02 | Fase 7: UI-polish & Deploy | 30 min | Spinner, focus-visible, hover-states, kompasknapper, confirm-dialoger, OfflineBanner |
+| 2026-05-02 | Forenklet login og gruppe-tilmelding | 30 min | Anonymous Auth, QuickStartPage, toggle-join, slet gamle filer |

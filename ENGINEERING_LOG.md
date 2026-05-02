@@ -344,3 +344,40 @@ Denne log dokumenterer alle vigtige beslutninger, ændringer og fremskridt i pro
 - Deploy til Vercel (kræver brugerens GitHub-repo tilslutning)
 - Push-notifikationer (separat fase)
 - Eventuelt offline-support med synkroniseringskø
+
+---
+
+## 2026-05-02 — Forenklet login og gruppe-tilmelding
+
+**Hvad:** Reduceret onboarding fra 5 skridt (registrer → forsiden → bólkar → indtast kode → kort) til 2 skridt (skriv navn → vælg grupper). Bruger Supabase Anonymous Auth.
+
+**Beslutninger:**
+- **Supabase Anonymous Auth** (`signInAnonymously()`) — opretter en rigtig bruger med `auth.uid()` uden email/password. RLS virker stadig. Kræver at "Allow anonymous sign-ins" slås til i Supabase Dashboard
+- **QuickStartPage** erstatter LoginPage og RegisterPage — ét navnefelt + "Byrja"-knap. Email-login beholdt som fold-ud sektion for bagudkompatibilitet
+- **Toggle-join** på GroupsPage — viser ALLE grupper med checkmarks i stedet for 6-cifret kode-input. Klik = join/leave. "Kort →" knap vises når mindst én gruppe er valgt
+- **Slettet JoinGroupForm** — erstattet af den nye toggle-liste direkte i GroupsPage
+- **`/register` rute fjernet** — der er kun `/login` nu (QuickStartPage)
+- **`signUp` bevaret** i AuthContext — bruges ikke aktivt men forbliver for fremtidig brug
+
+**Ny fil (1 stk):**
+- `src/features/auth/QuickStartPage.tsx` — Forenklet startside med navnefelt + email-login fold-ud
+
+**Slettede filer (3 stk):**
+- `src/features/auth/LoginPage.tsx` — erstattet af QuickStartPage
+- `src/features/auth/RegisterPage.tsx` — erstattet af QuickStartPage
+- `src/features/groups/JoinGroupForm.tsx` — erstattet af toggle-liste i GroupsPage
+
+**Ændrede filer (4 stk):**
+- `src/features/auth/AuthContext.tsx` — +`quickStart(displayName)` metode med anonym auth + profil-opdatering
+- `src/features/groups/GroupsPage.tsx` — Omskrevet: henter alle grupper + memberships, toggle-checkmarks, "Kort →" knap
+- `src/App.tsx` — `/login` → QuickStartPage, `/register` fjernet
+- `src/App.test.tsx` — Opdateret tests til ny QuickStartPage-overskrift
+
+**Kræver manuel handling i Supabase Dashboard:**
+- Authentication → Settings → "Allow anonymous sign-ins" → slå TIL
+
+**Verifikation:**
+- `npm run build` bygger uden fejl
+- `npm run test` kører 10 tests der alle består
+- Nyt flow: Navn → Byrja → Vælg grupper → Kort (2 skridt)
+- Eksisterende brugere kan stadig logge ind via email-sektionen

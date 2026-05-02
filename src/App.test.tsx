@@ -62,19 +62,20 @@ describe("App", () => {
     expect(screen.getByTestId("map-view")).toBeInTheDocument();
   });
 
-  it("vísir login-síðuna við /login rute", () => {
+  it("vísir quickstart-síðuna við /login rute", () => {
     renderWithProviders("/login");
     expect(
-      screen.getByRole("heading", { level: 1, name: "Rita inn" }),
+      screen.getByRole("heading", { level: 1, name: "Kom í gongd" }),
     ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Jógvan")).toBeInTheDocument();
   });
 
   it("omdirigerer til login frá /bolkar utan autentisering", () => {
     renderWithProviders("/bolkar");
     // Brugeren er ikke logget ind (session = null), så ProtectedRoute
-    // omdirigerer til /login — vi forventer login-formularen
+    // omdirigerer til /login — vi forventer QuickStartPage
     expect(
-      screen.getByRole("heading", { level: 1, name: "Rita inn" }),
+      screen.getByRole("heading", { level: 1, name: "Kom í gongd" }),
     ).toBeInTheDocument();
   });
 });

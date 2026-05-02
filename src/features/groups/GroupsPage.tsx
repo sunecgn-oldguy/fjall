@@ -1,52 +1,81 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import Spinner from "../../components/Spinner";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
 import type { Group } from "../../types/database";
 import CreateGroupForm from "./CreateGroupForm";
-import JoinGroupForm from "./JoinGroupForm";
 
 export default function GroupsPage() {
   const { user } = useAuth();
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"list" | "create" | "join">("list");
+  const navigate = useNavigate();
 
-  const fetchGroups = useCallback(async () => {
+  const [allGroups, setAllGroups] = useState<Group[]>([]);
+  const [memberGroupIds, setMemberGroupIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+
+  const fetchData = useCallback(async () => {
     if (!user) return;
 
-    // Hent gruppe-IDs som brugeren er medlem af
-    const { data: memberships } = await supabase
-      .from("group_members")
-      .select("group_id")
-      .eq("user_id", user.id);
+    // Hent alle grupper og brugerens memberships parallelt
+    const [groupsRes, membershipsRes] = await Promise.all([
+      supabase
+        .from("groups")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("group_members")
+        .select("group_id")
+        .eq("user_id", user.id),
+    ]);
 
-    if (!memberships || memberships.length === 0) {
-      setGroups([]);
-      setLoading(false);
-      return;
-    }
-
-    const groupIds = memberships.map((m) => m.group_id);
-
-    // Hent gruppedata
-    const { data } = await supabase
-      .from("groups")
-      .select("*")
-      .in("id", groupIds)
-      .order("created_at", { ascending: false });
-
-    setGroups((data as Group[]) ?? []);
+    setAllGroups((groupsRes.data as Group[]) ?? []);
+    setMemberGroupIds(
+      new Set((membershipsRes.data ?? []).map((m) => m.group_id)),
+    );
     setLoading(false);
   }, [user]);
 
   useEffect(() => {
-    fetchGroups();
-  }, [fetchGroups]);
+    fetchData();
+  }, [fetchData]);
 
-  function handleCreatedOrJoined() {
-    setView("list");
-    fetchGroups();
+  async function toggleMembership(groupId: string) {
+    if (!user) return;
+    setTogglingId(groupId);
+
+    const isMember = memberGroupIds.has(groupId);
+
+    if (isMember) {
+      // Forlad gruppen
+      await supabase
+        .from("group_members")
+        .delete()
+        .eq("group_id", groupId)
+        .eq("user_id", user.id);
+
+      setMemberGroupIds((prev) => {
+        const next = new Set(prev);
+        next.delete(groupId);
+        return next;
+      });
+    } else {
+      // Tilmeld gruppen
+      await supabase
+        .from("group_members")
+        .insert({ group_id: groupId, user_id: user.id, role: "member" });
+
+      setMemberGroupIds((prev) => new Set(prev).add(groupId));
+    }
+
+    setTogglingId(null);
+  }
+
+  function handleCreated() {
+    setShowCreate(false);
+    fetchData();
   }
 
   if (loading) {
@@ -58,31 +87,23 @@ export default function GroupsPage() {
     );
   }
 
+  const hasSelection = memberGroupIds.size > 0;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Bólkar</h1>
+        <h1 className="text-2xl font-bold">Vel bólkar</h1>
 
-        {view === "list" && (
-          <div className="flex gap-2">
-            <button
-              onClick={() => setView("create")}
-              className="rounded bg-stone-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-stone-700"
-            >
-              Stovna bólk
-            </button>
-            <button
-              onClick={() => setView("join")}
-              className="rounded border border-stone-300 px-3 py-1.5 text-sm font-medium hover:bg-stone-50"
-            >
-              Delta í bólki
-            </button>
-          </div>
-        )}
-
-        {view !== "list" && (
+        {!showCreate ? (
           <button
-            onClick={() => setView("list")}
+            onClick={() => setShowCreate(true)}
+            className="rounded bg-stone-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-stone-700"
+          >
+            Stovna bólk
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowCreate(false)}
             className="text-sm text-stone-600 underline"
           >
             Aftur
@@ -90,41 +111,72 @@ export default function GroupsPage() {
         )}
       </div>
 
-      {view === "create" && (
-        <CreateGroupForm onCreated={handleCreatedOrJoined} />
-      )}
+      {showCreate && <CreateGroupForm onCreated={handleCreated} />}
 
-      {view === "join" && (
-        <JoinGroupForm onJoined={handleCreatedOrJoined} />
-      )}
-
-      {view === "list" && (
+      {!showCreate && (
         <>
-          {groups.length === 0 ? (
+          <p className="text-sm text-stone-500">
+            Trýst á ein bólk fyri at delta ella fara úr.
+          </p>
+
+          {allGroups.length === 0 ? (
             <div className="rounded border border-dashed border-stone-300 p-8 text-center">
               <p className="text-stone-500">
-                Tú ert ikki limur í onkrum bólki enn.
+                Eingin bólkur er stovnaður enn.
               </p>
               <p className="mt-1 text-sm text-stone-400">
-                Stovna ein nýggjan bólk ella delta við einum kota.
+                Trýst á &quot;Stovna bólk&quot; fyri at byrja.
               </p>
             </div>
           ) : (
-            <ul className="space-y-3">
-              {groups.map((group) => (
-                <li
-                  key={group.id}
-                  className="rounded border border-stone-200 bg-white p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-semibold">{group.name}</h2>
-                    <span className="rounded bg-stone-100 px-2 py-0.5 font-mono text-sm tracking-widest text-stone-600">
-                      {group.join_code}
-                    </span>
-                  </div>
-                </li>
-              ))}
+            <ul className="space-y-2">
+              {allGroups.map((group) => {
+                const isMember = memberGroupIds.has(group.id);
+                const isToggling = togglingId === group.id;
+
+                return (
+                  <li key={group.id}>
+                    <button
+                      type="button"
+                      onClick={() => toggleMembership(group.id)}
+                      disabled={isToggling}
+                      className={`flex w-full items-center gap-3 rounded border p-4 text-left transition-colors ${
+                        isMember
+                          ? "border-green-300 bg-green-50"
+                          : "border-stone-200 bg-white hover:bg-stone-50"
+                      } disabled:opacity-50`}
+                    >
+                      {/* Checkmark-indikator */}
+                      <span
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold ${
+                          isMember
+                            ? "border-green-600 bg-green-600 text-white"
+                            : "border-stone-300 text-transparent"
+                        }`}
+                      >
+                        ✓
+                      </span>
+
+                      <span className="flex-1 font-semibold">
+                        {group.name}
+                      </span>
+
+                      {isToggling && <Spinner size="sm" />}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
+          )}
+
+          {/* "Gå til kort" knap — vises kun når mindst én gruppe er valgt */}
+          {hasSelection && (
+            <button
+              onClick={() => navigate("/kort")}
+              className="w-full rounded bg-green-700 px-4 py-3 text-center font-medium text-white hover:bg-green-600"
+            >
+              Kort →
+            </button>
           )}
         </>
       )}
