@@ -14,9 +14,9 @@ export default function HomePage() {
           Næstu stig
         </h2>
         <ul className="space-y-2 text-stone-600">
-          <li>🔐 Stovna kontu og logga inn</li>
+          <li>🔐 Skriva títt navn og byrja</li>
           <li>🗺️ Síggja kortið við GPS-staðseting</li>
-          <li>🐑 Gera seyðadriv og bjóða fólk</li>
+          <li>🐑 Velja bólk og samskipa seyðadriv</li>
         </ul>
       </div>
     </div>

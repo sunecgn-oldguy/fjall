@@ -15,7 +15,7 @@ export default defineConfig({
         // Runtime caching af OpenTopoMap korttiles
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/[a-c]\.tile\.opentopomap\.org\/.*/i,
+            urlPattern: /^https:\/\/tile\.opentopomap\.org\/.*/i,
             handler: "CacheFirst",
             options: {
               cacheName: "map-tiles",

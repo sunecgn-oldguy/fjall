@@ -50,24 +50,28 @@ export default function GroupsPage() {
 
     if (isMember) {
       // Forlad gruppen
-      await supabase
+      const { error } = await supabase
         .from("group_members")
         .delete()
         .eq("group_id", groupId)
         .eq("user_id", user.id);
 
-      setMemberGroupIds((prev) => {
-        const next = new Set(prev);
-        next.delete(groupId);
-        return next;
-      });
+      if (!error) {
+        setMemberGroupIds((prev) => {
+          const next = new Set(prev);
+          next.delete(groupId);
+          return next;
+        });
+      }
     } else {
       // Tilmeld gruppen
-      await supabase
+      const { error } = await supabase
         .from("group_members")
         .insert({ group_id: groupId, user_id: user.id, role: "member" });
 
-      setMemberGroupIds((prev) => new Set(prev).add(groupId));
+      if (!error) {
+        setMemberGroupIds((prev) => new Set(prev).add(groupId));
+      }
     }
 
     setTogglingId(null);
