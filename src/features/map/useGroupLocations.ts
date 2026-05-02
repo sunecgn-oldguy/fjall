@@ -111,6 +111,10 @@ export function useGroupLocations(
 
     fetchExisting();
 
+    // Polling-fallback: hent positioner hvert 30 sek
+    // Sikrer opdatering selvom Realtime-subscription fejler
+    const pollInterval = setInterval(fetchExisting, 30_000);
+
     // Realtime subscription
     const channel = supabase
       .channel(`locations:${groupId}`)
@@ -169,6 +173,7 @@ export function useGroupLocations(
 
     return () => {
       cancelled = true;
+      clearInterval(pollInterval);
 
       // Afmeld Realtime-kanal
       if (channelRef.current) {
