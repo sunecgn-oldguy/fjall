@@ -25,6 +25,22 @@ vi.mock("./features/map/MapView", () => ({
   ),
 }));
 
+// Mock react-leaflet hooks og komponenter der kræver MapContainer-kontekst
+vi.mock("react-leaflet", () => ({
+  MapContainer: ({ children }: { children?: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  TileLayer: () => null,
+  CircleMarker: () => null,
+  Circle: () => null,
+  Tooltip: () => null,
+  Popup: () => null,
+  useMap: () => ({
+    flyTo: vi.fn(),
+  }),
+  useMapEvents: () => null,
+}));
+
 function renderWithProviders(route: string) {
   return render(
     <MemoryRouter initialEntries={[route]}>

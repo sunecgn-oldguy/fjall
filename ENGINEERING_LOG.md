@@ -150,3 +150,52 @@ Denne log dokumenterer alle vigtige beslutninger, ændringer og fremskridt i pro
 **Næste skridt (Fase 4):**
 - Fåre-markering på kortet
 - Ordrer og anvisninger
+
+---
+
+## 2026-05-02 — Fase 4: Seyðamerking og ávísingar
+
+**Hvad:** Tilføjet fåre-observationer (sheep sightings) og ordrer/anvisninger (orders) — de to vigtigste koordineringsværktøjer under en seyðadriv.
+
+**Beslutninger:**
+- **Tap-på-kort** til positionsvalg — brugeren trykker på kortet for at placere en observation/ordre, i stedet for kun at bruge GPS-position
+- **State-maskine** i MapPage — idle → placing-sighting → sighting-form → idle (og tilsvarende for ordrer). Sikrer kun én aktiv interaktion ad gangen
+- **Farvekoder:** grøn = fåre-observationer, orange = ordrer, blå = egen position, rød = gruppemedlemmer
+- **Opacity-fade** på observationer — lineær fade fra 0.9 → 0.25 over 2 timer mod udløb
+- **Alle gruppemedlemmer kan resolve** observationer og acceptere/fuldføre ordrer — under en seyðadriv er det vigtigt at alle kan handle hurtigt
+- **Periodisk klient-side oprydning** af udløbne observationer (hvert 30 sek) — undgår at vise forældede prikker
+- **Ingen push-notifikationer** — det er Fase 6 (PWA). Ordrer vises kun in-app
+- **Store touch-targets** (56px knap, 10-12 radius) — mobil-first for brug med handsker/regn
+- **Én SQL-migration** for begge tabeller — de hører til samme fase
+
+**Nye filer (9 stk):**
+- `supabase/migrations/003_sightings_and_orders.sql` — DB-tabeller: sheep_sightings + orders med RLS + Realtime
+- `src/features/map/useSheepSightings.ts` — Hook: fetch, Realtime, add, resolve observationer
+- `src/features/map/useOrders.ts` — Hook: fetch, Realtime, add, accept, complete, cancel ordrer
+- `src/features/map/SheepSightingsLayer.tsx` — Grønne CircleMarker med antal-tooltip, opacity-fade
+- `src/features/map/OrdersLayer.tsx` — Orange CircleMarker med besked-tooltip og status-knapper
+- `src/features/map/MapActionButton.tsx` — Flydende "+"-knap med undermenu (merkja seyðir / gev ávísing)
+- `src/features/map/AddSightingPanel.tsx` — Bottom-panel: antal (+/- knapper), kompasretning (8 retninger), note
+- `src/features/map/AddOrderPanel.tsx` — Bottom-panel: beskedstekst + valgfri dropdown med gruppemedlemmer
+- `src/features/map/MapTapHandler.tsx` — Lytter på kort-tap for positionsvalg (useMapEvents)
+
+**Ændrede filer (3 stk):**
+- `src/types/database.ts` — +SheepSighting og +Order interfaces
+- `src/features/map/MapPage.tsx` — Komplet omskrivning med state-maskine, nye hooks/lag/overlays, action button
+- `src/App.test.tsx` — Tilføjet react-leaflet mock for at undgå useMapEvents-kontekstfejl
+
+**Database-design:**
+- `sheep_sightings` — id, group_id, user_id, lat/lng, count, direction (0-359), note, status (active/resolved), created_at, expires_at (default 2 timer)
+- `orders` — id, group_id, created_by, assigned_to (nullable), lat/lng, message, status (pending/accepted/completed/cancelled), created_at
+- RLS: bruger `user_group_ids()` fra migration 001, gruppemedlemmer kan se/oprette/opdatere, kun opretteren kan slette
+
+**Verifikation:**
+- `npm run build` bygger uden fejl
+- `npm run test` kører 10 tests der alle består
+- Fåre-observationer kan oprettes via kort-tap og vises som grønne prikker med fade
+- Ordrer kan oprettes, tildeles, accepteres og fuldføres
+- "+"-knappen er stor nok til touch med handsker
+
+**Næste skridt (Fase 5):**
+- Chat/beskeder mellem gruppemedlemmer
+- Eventuelt UI-polish og edge-case-håndtering

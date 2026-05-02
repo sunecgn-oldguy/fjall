@@ -33,3 +33,31 @@ export interface Location {
   speed: number | null;
   updated_at: string;
 }
+
+/** Fåre-observation — markerer hvor får er set */
+export interface SheepSighting {
+  id: string;
+  group_id: string;
+  user_id: string;
+  latitude: number;
+  longitude: number;
+  count: number;
+  direction: number | null;
+  note: string;
+  status: "active" | "resolved";
+  created_at: string;
+  expires_at: string;
+}
+
+/** Ordre/ávísing — "gå hertil"-kommando til gruppemedlem */
+export interface Order {
+  id: string;
+  group_id: string;
+  created_by: string;
+  assigned_to: string | null;
+  latitude: number;
+  longitude: number;
+  message: string;
+  status: "pending" | "accepted" | "completed" | "cancelled";
+  created_at: string;
+}

@@ -32,7 +32,7 @@ create policy "Brugere kan upserte egen position"
   for insert
   with check (
     auth.uid() = user_id
-    and group_id in (select user_group_ids())
+    and group_id in (select public.user_group_ids(auth.uid()))
   );
 
 create policy "Brugere kan opdatere egen position"
@@ -41,14 +41,14 @@ create policy "Brugere kan opdatere egen position"
   using (auth.uid() = user_id)
   with check (
     auth.uid() = user_id
-    and group_id in (select user_group_ids())
+    and group_id in (select public.user_group_ids(auth.uid()))
   );
 
 -- Brugere kan se positioner fra deres egne grupper
 create policy "Brugere kan se positioner i egne grupper"
   on public.locations
   for select
-  using (group_id in (select user_group_ids()));
+  using (group_id in (select public.user_group_ids(auth.uid())));
 
 -- Brugere kan slette deres egen position (ved logout/unmount)
 create policy "Brugere kan slette egen position"
