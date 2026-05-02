@@ -199,3 +199,49 @@ Denne log dokumenterer alle vigtige beslutninger, ændringer og fremskridt i pro
 **Næste skridt (Fase 5):**
 - Chat/beskeder mellem gruppemedlemmer
 - Eventuelt UI-polish og edge-case-håndtering
+
+---
+
+## 2026-05-02 — Fase 5: Skilaboð (gruppechat)
+
+**Hvad:** Tilføjet en simpel gruppechat så medlemmerne kan kommunikere under en seyðadriv — korte, hurtige beskeder som "Eg síggi 3 seyðir við ána" eller "Bíða lítið".
+
+**Beslutninger:**
+- **Ny side `/skilabod`** (færøsk for "beskeder") — beskyttet rute, fuld højde som kortsiden
+- **Genbruger GroupSelector** fra kortsiden — brugeren vælger hvilken gruppe de chatter i
+- **Kun tekst** — ingen billeder, filer, reaktioner eller tråde. Fokus på feltarbejde
+- **Seneste 50 beskeder** ved indlæsning — nok kontekst uden at overfylde
+- **Realtime via Supabase** — følger eksakt samme mønster som sightings/orders hooks (postgres_changes INSERT)
+- **Auto-scroll** til bunden ved nye beskeder via `useRef` + `scrollIntoView`
+- **Chat-boble layout:** egne beskeder til højre (blå), andres til venstre (grå) med afsendernavn
+- **Sammensat indeks** `(group_id, created_at)` for hurtig hentning af seneste beskeder
+- **Ingen update-policy** — beskeder kan ikke redigeres (simpelt, feltarbejde-fokus)
+
+**Nye filer (4 stk):**
+- `supabase/migrations/004_messages.sql` — messages-tabel med RLS, sammensat indeks, Realtime
+- `src/features/chat/useMessages.ts` — Hook: fetch seneste 50, Realtime subscription, sendMessage()
+- `src/features/chat/ChatPage.tsx` — Fuld chatside: gruppevælger, beskedliste med auto-scroll, input-bar
+- `src/features/chat/MessageBubble.tsx` — Chat-boble med navn, tekst, tidspunkt, isMine-baseret styling
+
+**Ændrede filer (3 stk):**
+- `src/types/database.ts` — +Message interface
+- `src/App.tsx` — +beskyttet rute `/skilabod` → ChatPage
+- `src/components/Layout.tsx` — +nav-link "Skilaboð", `isFullHeight` for chat-ruten (som /kort)
+
+**Database-design:**
+- `messages` — id (uuid PK), group_id (FK → groups), user_id (FK → auth.users), text (NOT NULL, mindst 1 tegn), created_at
+- RLS: gruppemedlemmer kan se + sende, kun afsenderen kan slette
+- Sammensat indeks: `(group_id, created_at)` for effektiv paginering
+
+**Verifikation:**
+- `npm run build` bygger uden fejl
+- `npm run test` kører 10 tests der alle består
+- Chat-rute kræver login (ProtectedRoute)
+- Beskeder hentes og vises i chat-rækkefølge
+- Realtime subscription lytter på nye INSERT-events
+- Egne beskeder: blå boble til højre. Andres: grå boble med navn til venstre
+- Auto-scroll virker ved nye beskeder
+
+**Næste skridt (Fase 6):**
+- Push-notifikationer (PWA)
+- Offline-support

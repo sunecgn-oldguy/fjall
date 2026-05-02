@@ -5,7 +5,7 @@ export default function Layout() {
   const { user, loading, signOut } = useAuth();
   const { pathname } = useLocation();
 
-  const isMapRoute = pathname === "/kort";
+  const isFullHeight = pathname === "/kort" || pathname === "/skilabod";
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `px-3 py-1 rounded transition-colors ${
@@ -15,7 +15,7 @@ export default function Layout() {
     }`;
 
   return (
-    <div className={`flex flex-col bg-stone-50 text-stone-900 ${isMapRoute ? "h-screen" : "min-h-screen"}`}>
+    <div className={`flex flex-col bg-stone-50 text-stone-900 ${isFullHeight ? "h-screen" : "min-h-screen"}`}>
       <header className="bg-stone-800 text-white">
         <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <NavLink to="/" className="text-xl font-bold tracking-tight">
@@ -31,9 +31,14 @@ export default function Layout() {
             </NavLink>
 
             {user && (
-              <NavLink to="/bolkar" className={navLinkClass}>
-                Bólkar
-              </NavLink>
+              <>
+                <NavLink to="/bolkar" className={navLinkClass}>
+                  Bólkar
+                </NavLink>
+                <NavLink to="/skilabod" className={navLinkClass}>
+                  Skilaboð
+                </NavLink>
+              </>
             )}
 
             {/* Login/logout */}
@@ -59,7 +64,7 @@ export default function Layout() {
 
       <main
         className={
-          isMapRoute
+          isFullHeight
             ? "flex-1 min-h-0"
             : "mx-auto w-full max-w-5xl flex-1 px-4 py-6"
         }
@@ -67,7 +72,7 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      {!isMapRoute && (
+      {!isFullHeight && (
         <footer className="border-t border-stone-200 bg-stone-100 py-4 text-center text-sm text-stone-500">
           Fjall — Seyðadriv Coordinator
         </footer>

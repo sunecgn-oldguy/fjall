@@ -6,6 +6,7 @@ import LoginPage from "./features/auth/LoginPage";
 import RegisterPage from "./features/auth/RegisterPage";
 import ProtectedRoute from "./features/auth/ProtectedRoute";
 import GroupsPage from "./features/groups/GroupsPage";
+import ChatPage from "./features/chat/ChatPage";
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         {/* Beskyttede ruter — kræver login */}
         <Route element={<ProtectedRoute />}>
           <Route path="bolkar" element={<GroupsPage />} />
+          <Route path="skilabod" element={<ChatPage />} />
         </Route>
       </Route>
     </Routes>

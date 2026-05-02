@@ -61,3 +61,12 @@ export interface Order {
   status: "pending" | "accepted" | "completed" | "cancelled";
   created_at: string;
 }
+
+/** Chatbesked i en gruppe */
+export interface Message {
+  id: string;
+  group_id: string;
+  user_id: string;
+  text: string;
+  created_at: string;
+}
