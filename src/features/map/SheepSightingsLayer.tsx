@@ -1,3 +1,15 @@
+/**
+ * SheepSightingsLayer — viser fåre-observationer som grønne prikker på kortet.
+ *
+ * Hver observation viser antal får som permanent label.
+ * Tryk på en prik åbner en popup med detaljer + "Liðugt"-knap.
+ *
+ * Opacity (gennemsigtighed) fader gradvis over 2 timer:
+ * - Ny observation: næsten fuld opacity (0.9)
+ * - Tæt på udløb: svag opacity (0.25)
+ * - Udløbet: usynlig (0)
+ * Dette giver et visuelt hint om hvor "frisk" informationen er.
+ */
 import { CircleMarker, Popup, Tooltip } from "react-leaflet";
 import type { SightingWithName } from "./useSheepSightings";
 
@@ -6,38 +18,28 @@ interface SheepSightingsLayerProps {
   onResolve: (id: string) => void;
 }
 
-/** Kompasretninger for visning */
+/** Kompasretnings-labels brugt i popup-detaljer */
 const COMPASS_LABELS: Record<number, string> = {
-  0: "N",
-  45: "NE",
-  90: "E",
-  135: "SE",
-  180: "S",
-  225: "SW",
-  270: "W",
-  315: "NW",
+  0: "N", 45: "NE", 90: "E", 135: "SE",
+  180: "S", 225: "SW", 270: "W", 315: "NW",
 };
 
 /**
  * Beregner opacity baseret på tid til udløb.
- * Nyoprettede observationer: fuld opacity (0.9).
- * Tæt på udløb: lav opacity (0.25).
+ * Lineær interpolation fra 0.9 (ny) til 0.25 (tæt på udløb).
  */
 function calcOpacity(expiresAt: string): number {
   const now = Date.now();
   const expires = new Date(expiresAt).getTime();
-  const total = 2 * 60 * 60 * 1000; // 2 timer i ms
+  const total = 2 * 60 * 60 * 1000; // 2 timer i millisekunder
   const remaining = expires - now;
 
   if (remaining <= 0) return 0;
-  // Lineær fade fra 0.9 → 0.25
-  const ratio = Math.min(remaining / total, 1);
-  return 0.25 + ratio * 0.65;
+  const ratio = Math.min(remaining / total, 1); // 0 = udløbet, 1 = helt ny
+  return 0.25 + ratio * 0.65; // Mapper til 0.25–0.90
 }
 
-/**
- * Finder nærmeste kompasretning-label for en given grad.
- */
+/** Finder nærmeste kompasretning for en given grad (f.eks. 47° → "NE") */
 function compassLabel(degrees: number): string {
   const keys = [0, 45, 90, 135, 180, 225, 270, 315];
   let closest = 0;
@@ -52,11 +54,6 @@ function compassLabel(degrees: number): string {
   return COMPASS_LABELS[closest];
 }
 
-/**
- * Viser fåre-observationer som grønne prikker med antal-tooltip.
- * Opacity fader gradvis mod udløbstidspunktet (2 timer).
- * Tap på en prik viser detaljer + "Liðugt"-knap.
- */
 export default function SheepSightingsLayer({
   sightings,
   onResolve,
@@ -65,7 +62,7 @@ export default function SheepSightingsLayer({
     <>
       {sightings.map((s) => {
         const opacity = calcOpacity(s.expires_at);
-        if (opacity <= 0) return null;
+        if (opacity <= 0) return null; // Udløbet — vis ikke
 
         return (
           <CircleMarker
@@ -74,15 +71,17 @@ export default function SheepSightingsLayer({
             radius={10}
             pathOptions={{
               color: "#fff",
-              fillColor: "#22c55e",
+              fillColor: "#22c55e",  // Grøn = fåre-observation
               fillOpacity: opacity,
               weight: 2,
               opacity: opacity,
             }}
           >
+            {/* Antal-label — altid synlig */}
             <Tooltip permanent direction="top" offset={[0, -12]}>
               {s.count} seyður
             </Tooltip>
+            {/* Popup med detaljer — åbnes ved tryk */}
             <Popup>
               <div className="min-w-[160px] text-sm">
                 <p className="font-semibold text-green-700">

@@ -1,3 +1,14 @@
+/**
+ * AddOrderPanel — bottom-panel til at oprette en ny ordre/ávísing.
+ *
+ * Vises efter brugeren har trykket på kortet for at vælge position.
+ * Panelet indeholder:
+ * - Besked-felt (hvad skal modtageren gøre?)
+ * - Dropdown med gruppemedlemmer (hvem er ordren til? "Alle" som standard)
+ * - Gem/Annullér knapper
+ *
+ * Gruppemedlemmer hentes fra Supabase når panelet mountes.
+ */
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
@@ -15,10 +26,6 @@ interface AddOrderPanelProps {
   onCancel: () => void;
 }
 
-/**
- * Bottom-panel til at oprette en ny ordre/ávísing.
- * Viser besked-input og valgfri dropdown med gruppemedlemmer.
- */
 export default function AddOrderPanel({
   groupId,
   onSubmit,
@@ -28,8 +35,9 @@ export default function AddOrderPanel({
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
   const [members, setMembers] = useState<GroupMemberOption[]>([]);
 
-  // Hent gruppemedlemmer til dropdown
+  /** Hent gruppemedlemmer til tildelings-dropdown */
   const fetchMembers = useCallback(async () => {
+    // Trin 1: Hent bruger-IDs fra group_members
     const { data: memberships } = await supabase
       .from("group_members")
       .select("user_id")
@@ -37,6 +45,7 @@ export default function AddOrderPanel({
 
     if (!memberships) return;
 
+    // Trin 2: Hent navne fra profiles
     const userIds = memberships.map((m) => m.user_id);
     const { data: profiles } = await supabase
       .from("profiles")
@@ -64,7 +73,6 @@ export default function AddOrderPanel({
 
   return (
     <div className="pointer-events-auto absolute bottom-0 left-0 right-0 z-[1001] rounded-t-2xl bg-white p-4 shadow-lg">
-      {/* Overskrift */}
       <h3 className="mb-3 text-center text-lg font-semibold text-stone-800">
         Gev ávísing
       </h3>
@@ -84,7 +92,7 @@ export default function AddOrderPanel({
         />
       </div>
 
-      {/* Tildeling */}
+      {/* Tildeling — valgfri, default = alle i gruppen */}
       <div className="mb-4">
         <label className="mb-1 block text-sm font-medium text-stone-600">
           Til (valfrítt — tómt = allir)
@@ -103,7 +111,7 @@ export default function AddOrderPanel({
         </select>
       </div>
 
-      {/* Knapper */}
+      {/* Handlingsknapper */}
       <div className="flex gap-3">
         <button
           onClick={onCancel}

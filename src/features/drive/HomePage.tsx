@@ -1,3 +1,9 @@
+/**
+ * HomePage — velkomstsiden der vises på rod-ruten (/).
+ *
+ * En simpel statisk side der forklarer hvad appen gør
+ * og giver brugeren de næste skridt.
+ */
 export default function HomePage() {
   return (
     <div className="space-y-6">

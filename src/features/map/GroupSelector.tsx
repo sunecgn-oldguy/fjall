@@ -1,3 +1,12 @@
+/**
+ * GroupSelector — dropdown til at vælge aktiv gruppe.
+ *
+ * Bruges både på kortsiden (som overlay) og på chat-siden (som top-bar).
+ * Henter brugerens grupper fra Supabase og auto-vælger den første gruppe
+ * hvis ingen er valgt endnu.
+ *
+ * Viser en besked hvis brugeren ikke er medlem af nogen gruppe.
+ */
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import type { Group } from "../../types/database";
@@ -8,10 +17,6 @@ interface GroupSelectorProps {
   onSelect: (groupId: string | null) => void;
 }
 
-/**
- * Dropdown-overlay øverst på kortet til at vælge aktiv gruppe.
- * Henter brugerens grupper fra Supabase og auto-vælger den første.
- */
 export default function GroupSelector({
   userId,
   selectedGroupId,
@@ -21,6 +26,7 @@ export default function GroupSelector({
   const [loading, setLoading] = useState(true);
 
   const fetchGroups = useCallback(async () => {
+    // Trin 1: Find hvilke grupper brugeren er medlem af
     const { data: memberships } = await supabase
       .from("group_members")
       .select("group_id")
@@ -32,6 +38,7 @@ export default function GroupSelector({
       return;
     }
 
+    // Trin 2: Hent gruppedata for de grupper brugeren er i
     const groupIds = memberships.map((m) => m.group_id);
     const { data } = await supabase
       .from("groups")
@@ -43,7 +50,7 @@ export default function GroupSelector({
     setGroups(fetched);
     setLoading(false);
 
-    // Auto-vælg første gruppe hvis ingen er valgt
+    // Auto-vælg første gruppe hvis ingen er valgt endnu
     if (!selectedGroupId && fetched.length > 0) {
       onSelect(fetched[0].id);
     }
@@ -53,8 +60,10 @@ export default function GroupSelector({
     fetchGroups();
   }, [fetchGroups]);
 
+  // Vis ingenting mens vi indlæser
   if (loading) return null;
 
+  // Vis besked hvis brugeren ikke er i nogen gruppe
   if (groups.length === 0) {
     return (
       <div className="rounded bg-white/90 px-3 py-2 text-sm text-stone-500 shadow backdrop-blur">

@@ -1,3 +1,27 @@
+/**
+ * MapPage — appens hovedside med det interaktive kort.
+ *
+ * Dette er den mest komplekse komponent i appen. Den samler:
+ * - GPS-position (useGeolocation)
+ * - Live positionsdeling (useGroupLocations)
+ * - Fåre-observationer (useSheepSightings)
+ * - Ordrer/ávísingar (useOrders)
+ * - Kortvisning med alle lag (MapView + layers)
+ * - Overlay-UI (gruppevælger, "+"-knap, formularer)
+ *
+ * Interaktionen styres af en STATE-MASKINE (MapMode):
+ *   idle → placing-sighting → sighting-form → idle
+ *   idle → placing-order   → order-form    → idle
+ *
+ * En state-maskine sikrer at kun én interaktion er aktiv ad gangen.
+ * F.eks. kan brugeren ikke oprette en observation OG en ordre samtidig.
+ *
+ * Farvekoder på kortet:
+ * - Blå = egen position
+ * - Farvede (rød, violet osv.) = gruppemedlemmer
+ * - Grøn = fåre-observationer
+ * - Orange = ordrer
+ */
 import { useState, useCallback } from "react";
 import { Link } from "react-router";
 import type { LatLng } from "leaflet";
@@ -18,31 +42,13 @@ import MapActionButton from "./MapActionButton";
 import AddSightingPanel from "./AddSightingPanel";
 import AddOrderPanel from "./AddOrderPanel";
 
-/**
- * State-maskine for kort-interaktion:
- * - idle: normal kort-visning
- * - placing-sighting: brugeren vælger position for fåre-observation
- * - sighting-form: formular til at udfylde observationsdata
- * - placing-order: brugeren vælger position for ordre
- * - order-form: formular til at udfylde ordredata
- */
+/** De mulige tilstande for kort-interaktion */
 type MapMode =
-  | "idle"
-  | "placing-sighting"
-  | "sighting-form"
-  | "placing-order"
-  | "order-form";
-
-/**
- * Kortsiden — viser et interaktivt Leaflet-kort med:
- * - Brugerens GPS-position (blå prik)
- * - Andre gruppemedlemmers positioner (røde prikker)
- * - Fåre-observationer (grønne prikker med fade)
- * - Ordrer/ávísingar (orange prikker)
- * - "+"-knap til at oprette nye observationer/ordrer
- * - Gruppevælger overlay
- * - GPS-status og login-opfordring
- */
+  | "idle"              // Normal kort-visning
+  | "placing-sighting"  // Venter på at brugeren trykker på kortet (observation)
+  | "sighting-form"     // Formular til observationsdata
+  | "placing-order"     // Venter på at brugeren trykker på kortet (ordre)
+  | "order-form";       // Formular til ordredata
 export default function MapPage() {
   const { user } = useAuth();
   const { position, error: geoError, loading: geoLoading } = useGeolocation();

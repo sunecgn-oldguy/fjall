@@ -1,3 +1,12 @@
+/**
+ * GroupsPage — side hvor brugeren vælger hvilke grupper de vil deltage i.
+ *
+ * Viser ALLE grupper i systemet som en liste med checkmarks.
+ * Klik på en gruppe = join/leave (toggle). Når mindst én gruppe er valgt,
+ * vises en "Kort →" knap der sender brugeren videre.
+ *
+ * Dette er trin 2 i onboarding-flowet (efter QuickStartPage).
+ */
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import Spinner from "../../components/Spinner";
@@ -11,15 +20,18 @@ export default function GroupsPage() {
   const navigate = useNavigate();
 
   const [allGroups, setAllGroups] = useState<Group[]>([]);
+  // Set giver O(1) opslag — hurtigere end at søge i et array
   const [memberGroupIds, setMemberGroupIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
+  /** Hent alle grupper OG brugerens memberships parallelt fra Supabase */
   const fetchData = useCallback(async () => {
     if (!user) return;
 
-    // Hent alle grupper og brugerens memberships parallelt
+    // Promise.all kører begge forespørgsler samtidig (parallelt),
+    // i stedet for at vente på den første før den anden starter
     const [groupsRes, membershipsRes] = await Promise.all([
       supabase
         .from("groups")
@@ -42,6 +54,11 @@ export default function GroupsPage() {
     fetchData();
   }, [fetchData]);
 
+  /**
+   * Toggle medlemskab: klik på en gruppe for at joine eller forlade den.
+   * UI opdateres kun hvis Supabase-kaldet lykkedes — ellers forbliver
+   * tilstanden uændret, så brugeren ser den rigtige status.
+   */
   async function toggleMembership(groupId: string) {
     if (!user) return;
     setTogglingId(groupId);
@@ -49,13 +66,13 @@ export default function GroupsPage() {
     const isMember = memberGroupIds.has(groupId);
 
     if (isMember) {
-      // Forlad gruppen
       const { error } = await supabase
         .from("group_members")
         .delete()
         .eq("group_id", groupId)
         .eq("user_id", user.id);
 
+      // Opdatér kun UI hvis databasen accepterede ændringen
       if (!error) {
         setMemberGroupIds((prev) => {
           const next = new Set(prev);
@@ -64,7 +81,6 @@ export default function GroupsPage() {
         });
       }
     } else {
-      // Tilmeld gruppen
       const { error } = await supabase
         .from("group_members")
         .insert({ group_id: groupId, user_id: user.id, role: "member" });
@@ -77,6 +93,7 @@ export default function GroupsPage() {
     setTogglingId(null);
   }
 
+  /** Callback når en ny gruppe er oprettet — luk formularen og genindlæs data */
   function handleCreated() {
     setShowCreate(false);
     fetchData();
@@ -95,6 +112,7 @@ export default function GroupsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header med titel og "Stovna bólk" knap */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Vel bólkar</h1>
 
@@ -150,7 +168,7 @@ export default function GroupsPage() {
                           : "border-stone-200 bg-white hover:bg-stone-50"
                       } disabled:opacity-50`}
                     >
-                      {/* Checkmark-indikator */}
+                      {/* Cirkel-checkmark: grøn med ✓ = medlem, tom = ikke medlem */}
                       <span
                         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold ${
                           isMember

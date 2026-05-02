@@ -1,8 +1,18 @@
+/**
+ * useMessages — hook der håndterer chatbeskeder for en gruppe.
+ *
+ * Henter de seneste 50 beskeder ved indlæsning, og lytter derefter
+ * på nye beskeder via Supabase Realtime (kun INSERT — beskeder kan ikke redigeres).
+ *
+ * Beskeder vises i kronologisk rækkefølge (ældste først, nyeste nederst).
+ * Vi henter dem i omvendt rækkefølge fra databasen (for at få de seneste 50)
+ * og vender dem om i klienten.
+ */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import type { Message } from "../../types/database";
 
-/** Besked beriget med afsenderens display_name */
+/** Besked beriget med afsenderens visningsnavn */
 export interface MessageWithName extends Message {
   display_name: string;
 }
@@ -12,12 +22,6 @@ interface UseMessagesReturn {
   sendMessage: (text: string) => Promise<boolean>;
 }
 
-/**
- * Hook der håndterer chatbeskeder for en gruppe:
- * - Henter de seneste 50 beskeder (sorteret ældste først)
- * - Abonnerer på nye beskeder via Supabase Realtime
- * - Eksponerer sendMessage() til at sende ny besked
- */
 export function useMessages(
   groupId: string | null,
   userId: string | null,
@@ -25,7 +29,7 @@ export function useMessages(
   const [messages, setMessages] = useState<MessageWithName[]>([]);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  // Hent display_name fra profiles-tabel
+  /** Hent visningsnavn fra profiles-tabellen */
   const fetchDisplayName = useCallback(
     async (uid: string): Promise<string> => {
       const { data } = await supabase
@@ -38,7 +42,7 @@ export function useMessages(
     [],
   );
 
-  // Berig en besked med display_name
+  /** Berig en besked med afsenderens visningsnavn */
   const enrichMessage = useCallback(
     async (msg: Message): Promise<MessageWithName> => {
       const displayName = await fetchDisplayName(msg.user_id);
@@ -47,7 +51,7 @@ export function useMessages(
     [fetchDisplayName],
   );
 
-  // Initial fetch + Realtime subscription
+  // Hent eksisterende beskeder + abonnér på nye
   useEffect(() => {
     if (!groupId) {
       setMessages([]);
@@ -57,7 +61,8 @@ export function useMessages(
     let cancelled = false;
 
     async function fetchExisting() {
-      // Hent seneste 50 beskeder — sorteret med ældste først
+      // Hent seneste 50 beskeder, sorteret nyeste-først (for LIMIT),
+      // derefter vendt om så ældste vises øverst i chatten
       const { data } = await supabase
         .from("messages")
         .select("*")
@@ -67,7 +72,7 @@ export function useMessages(
 
       if (cancelled || !data) return;
 
-      // Vend rækkefølgen så ældste er først (chat-rækkefølge)
+      // Vend rækkefølgen: database giver [nyeste, ..., ældste] → vi vil have [ældste, ..., nyeste]
       const reversed = [...data].reverse();
 
       const enriched = await Promise.all(
@@ -81,7 +86,7 @@ export function useMessages(
 
     fetchExisting();
 
-    // Realtime subscription — lyt kun efter nye beskeder (INSERT)
+    // Realtime: lyt KUN på INSERT (nye beskeder) — ikke UPDATE eller DELETE
     const channel = supabase
       .channel(`messages:${groupId}`)
       .on(
@@ -99,7 +104,8 @@ export function useMessages(
           const enriched = await enrichMessage(msg);
 
           setMessages((prev) => {
-            // Undgå duplikater (kan ske ved optimistisk insert)
+            // Undgå duplikater — kan ske hvis Realtime-beskeden ankommer
+            // før fetchExisting er færdig, eller ved netværksfejl
             if (prev.some((m) => m.id === msg.id)) return prev;
             return [...prev, enriched];
           });
@@ -118,7 +124,7 @@ export function useMessages(
     };
   }, [groupId, enrichMessage]);
 
-  // Send en ny besked
+  /** Send en ny besked i gruppen. Returnerer true ved succes. */
   const sendMessage = useCallback(
     async (text: string): Promise<boolean> => {
       if (!groupId || !userId) return false;

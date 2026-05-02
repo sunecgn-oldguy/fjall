@@ -1,8 +1,15 @@
+/**
+ * CreateGroupForm — formular til at oprette en ny gruppe.
+ *
+ * Opretter gruppen i databasen og tilføjer opretteren som admin.
+ * Genererer en tilfældig 6-cifret join-kode (bruges ikke i UI længere,
+ * men gemmes i databasen for bagudkompatibilitet).
+ */
 import { type FormEvent, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../auth/AuthContext";
 
-/** Genererer en tilfældig 6-cifret kode (000000–999999) */
+/** Genererer en tilfældig 6-cifret kode, f.eks. "047291" */
 function generateJoinCode(): string {
   return Math.floor(Math.random() * 1_000_000)
     .toString()
@@ -10,7 +17,7 @@ function generateJoinCode(): string {
 }
 
 interface Props {
-  onCreated: () => void;
+  onCreated: () => void;  // Callback der køres efter succesfuld oprettelse
 }
 
 export default function CreateGroupForm({ onCreated }: Props) {
@@ -28,12 +35,12 @@ export default function CreateGroupForm({ onCreated }: Props) {
 
     const joinCode = generateJoinCode();
 
-    // 1. Opret gruppen
+    // Trin 1: Opret gruppen i "groups" tabellen
     const { data: group, error: groupError } = await supabase
       .from("groups")
       .insert({ name, join_code: joinCode, created_by: user.id })
-      .select()
-      .single();
+      .select()   // .select() returnerer den oprettede række (vi har brug for group.id)
+      .single();   // .single() da vi forventer præcis én række
 
     if (groupError) {
       setError(groupError.message);
@@ -41,7 +48,7 @@ export default function CreateGroupForm({ onCreated }: Props) {
       return;
     }
 
-    // 2. Tilføj opretteren som admin
+    // Trin 2: Tilføj opretteren som admin-medlem af gruppen
     const { error: memberError } = await supabase
       .from("group_members")
       .insert({ group_id: group.id, user_id: user.id, role: "admin" });

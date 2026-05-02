@@ -1,3 +1,18 @@
+/**
+ * Vite build-konfiguration for Fjall.
+ *
+ * Vite er en moderne build-tool der:
+ * - Serverer kode under udvikling med hurtig Hot Module Replacement (HMR)
+ * - Bundler alt til optimeret JavaScript/CSS ved "npm run build"
+ *
+ * Plugins:
+ * - react(): Gør JSX/TSX-syntaks mulig
+ * - tailwindcss(): Genererer CSS fra Tailwind-klasser
+ * - VitePWA(): Gør appen installerbar som PWA med service worker
+ *
+ * Test-konfigurationen i bunden siger at Vitest skal bruge jsdom
+ * (en browser-simulation) til at køre React-tests.
+ */
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";

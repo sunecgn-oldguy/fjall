@@ -1,3 +1,12 @@
+/**
+ * QuickStartPage — den side nye brugere møder.
+ *
+ * Forenklet onboarding: skriv dit navn → klik "Byrja" → du er logget ind.
+ * Bruger anonym authentication (ingen email/password krævet).
+ *
+ * For eksisterende brugere med email-konto er der en fold-ud sektion nederst.
+ * Denne side erstatter den gamle LoginPage og RegisterPage.
+ */
 import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router";
 import Spinner from "../../components/Spinner";
@@ -7,16 +16,17 @@ export default function QuickStartPage() {
   const { quickStart, signIn } = useAuth();
   const navigate = useNavigate();
 
-  // Quick-start state
+  // Quick-start felter
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Email-login fold-ud
+  // Email-login fold-ud (skjult som standard)
   const [showEmailLogin, setShowEmailLogin] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  /** Håndtér det primære flow: skriv navn → anonym login → navigér til gruppevalg */
   async function handleQuickStart(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -28,10 +38,12 @@ export default function QuickStartPage() {
       setError(startError);
       setSubmitting(false);
     } else {
+      // Send brugeren videre til gruppevalg-siden
       navigate("/bolkar");
     }
   }
 
+  /** Håndtér det sekundære flow: email-login for eksisterende brugere */
   async function handleEmailLogin(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -54,6 +66,7 @@ export default function QuickStartPage() {
         Skriva títt navn og byrja beinanvegin.
       </p>
 
+      {/* Primær formular: bare et navnefelt og en knap */}
       <form onSubmit={handleQuickStart} className="space-y-4">
         <div>
           <label htmlFor="name" className="mb-1 block text-sm font-medium">
@@ -71,6 +84,7 @@ export default function QuickStartPage() {
           />
         </div>
 
+        {/* Vis fejl kun når email-login IKKE er åben */}
         {error && !showEmailLogin && (
           <p className="text-sm text-red-600" role="alert">
             {error}
@@ -142,6 +156,7 @@ export default function QuickStartPage() {
               />
             </div>
 
+            {/* Vis fejl kun når email-login ER åben */}
             {error && showEmailLogin && (
               <p className="text-sm text-red-600" role="alert">
                 {error}

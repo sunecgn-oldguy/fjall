@@ -1,9 +1,22 @@
+/**
+ * OrdersLayer — viser ordrer/ávísingar som orange prikker på kortet.
+ *
+ * Ordrer er "gå hertil"-kommandoer med en position og en besked.
+ * Prikken er større og har tykkere kant hvis ordren er tildelt den aktuelle bruger.
+ *
+ * Popup viser:
+ * - Ordrebesked
+ * - Hvem der oprettede den og hvem den er tildelt
+ * - Status-knapper afhængig af ordre-status:
+ *   - "pending" → "Góðtak" knap (acceptér ordren)
+ *   - "accepted" → "Liðugt" knap (markér som fuldført)
+ *   - Altid → "Strika" knap (annullér ordren)
+ */
 import { CircleMarker, Popup, Tooltip } from "react-leaflet";
 import type { OrderWithNames } from "./useOrders";
 
 interface OrdersLayerProps {
   orders: OrderWithNames[];
-  /** Aktuelt indlogget bruger-id — bruges til at fremhæve tildelte ordrer */
   currentUserId: string | null;
   onAccept: (id: string) => void;
   onComplete: (id: string) => void;
@@ -16,11 +29,6 @@ const STATUS_LABELS: Record<string, string> = {
   accepted: "Góðtikið",
 };
 
-/**
- * Viser ordrer som orange prikker på kortet.
- * Ordrer tildelt den aktuelle bruger får en tykkere kant.
- * Tap på en prik viser detaljer + status-knapper.
- */
 export default function OrdersLayer({
   orders,
   currentUserId,
@@ -38,19 +46,21 @@ export default function OrdersLayer({
           <CircleMarker
             key={o.id}
             center={[o.latitude, o.longitude]}
-            radius={isAssignedToMe ? 12 : 10}
+            radius={isAssignedToMe ? 12 : 10}  // Større prik for egne ordrer
             pathOptions={{
               color: isAssignedToMe ? "#f97316" : "#fff",
-              fillColor: "#f97316",
-              fillOpacity: isAccepted ? 0.6 : 0.9,
-              weight: isAssignedToMe ? 3 : 2,
+              fillColor: "#f97316",  // Orange = ordre
+              fillOpacity: isAccepted ? 0.6 : 0.9, // Svagere når accepteret
+              weight: isAssignedToMe ? 3 : 2,       // Tykkere kant for egne
             }}
           >
+            {/* Besked-label (afkortet til 20 tegn) */}
             <Tooltip permanent direction="top" offset={[0, -12]}>
               {o.message.length > 20
                 ? o.message.slice(0, 20) + "..."
                 : o.message}
             </Tooltip>
+            {/* Popup med alle detaljer og status-knapper */}
             <Popup>
               <div className="min-w-[180px] text-sm">
                 <p className="font-semibold text-orange-700">{o.message}</p>
@@ -67,6 +77,7 @@ export default function OrdersLayer({
                 </p>
 
                 <div className="mt-2 flex flex-col gap-1">
+                  {/* Acceptér-knap — kun synlig for "pending" ordrer */}
                   {o.status === "pending" && (
                     <button
                       onClick={() => onAccept(o.id)}
@@ -75,6 +86,7 @@ export default function OrdersLayer({
                       Góðtak
                     </button>
                   )}
+                  {/* Fuldført-knap — kun synlig for "accepted" ordrer */}
                   {o.status === "accepted" && (
                     <button
                       onClick={() => {
@@ -87,6 +99,7 @@ export default function OrdersLayer({
                       Liðugt
                     </button>
                   )}
+                  {/* Annullér-knap — altid tilgængelig */}
                   <button
                     onClick={() => {
                       if (window.confirm("Ert tú vís/ur? Hetta strikar ávísingina.")) {

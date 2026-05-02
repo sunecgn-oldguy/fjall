@@ -1,3 +1,16 @@
+/**
+ * Layout — den fælles ramme rundt om alle sider.
+ *
+ * Indeholder:
+ * - Header med app-navn og navigation
+ * - OfflineBanner der vises når internet mangler
+ * - <Outlet /> hvor den aktuelle side indsættes (fra React Router)
+ * - Footer (skjult på kort- og chat-siden for at spare plads)
+ *
+ * Navigation tilpasser sig login-status:
+ * - Ikke logget ind: Forsíða, Kort, Rita inn
+ * - Logget ind: Forsíða, Kort, Bólkar, Skilaboð, Útrita
+ */
 import { NavLink, Outlet, useLocation } from "react-router";
 import { useAuth } from "../features/auth/AuthContext";
 import OfflineBanner from "./OfflineBanner";
@@ -6,9 +19,12 @@ export default function Layout() {
   const { user, loading, signOut } = useAuth();
   const { pathname } = useLocation();
 
-  // dvh = dynamic viewport height — tilpasser sig iOS Safari adresselinje
+  // Kort og chat bruger fuld skærmhøjde (ingen scrollbar, ingen footer).
+  // Vi bruger "dvh" (dynamic viewport height) i stedet for "vh" fordi
+  // iOS Safari's 100vh inkluderer arealet bag adresselinjen — dvh tilpasser sig.
   const isFullHeight = pathname === "/kort" || pathname === "/skilabod";
 
+  // NavLink-styling: aktiv side får mørk baggrund, inaktive er lysegrå
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `px-3 py-1 rounded transition-colors ${
       isActive
@@ -32,6 +48,7 @@ export default function Layout() {
               Kort
             </NavLink>
 
+            {/* Vis Bólkar og Skilaboð kun når brugeren er logget ind */}
             {user && (
               <>
                 <NavLink to="/bolkar" className={navLinkClass}>
@@ -43,7 +60,7 @@ export default function Layout() {
               </>
             )}
 
-            {/* Login/logout */}
+            {/* Login/logout knap — vent til auth er loaded så vi undgår flicker */}
             {!loading && (
               <>
                 {user ? (
@@ -66,6 +83,7 @@ export default function Layout() {
 
       <OfflineBanner />
 
+      {/* Hovedindhold — den aktuelle side indsættes her via <Outlet /> */}
       <main
         className={
           isFullHeight
@@ -76,6 +94,7 @@ export default function Layout() {
         <Outlet />
       </main>
 
+      {/* Footer skjules på kort- og chat-siden for at give max plads */}
       {!isFullHeight && (
         <footer className="border-t border-stone-200 bg-stone-100 py-4 text-center text-sm text-stone-500">
           Fjall — Seyðadriv Coordinator

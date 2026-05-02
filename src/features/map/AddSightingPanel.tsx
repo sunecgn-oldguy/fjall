@@ -1,3 +1,13 @@
+/**
+ * AddSightingPanel — bottom-panel til at oprette en ny fåre-observation.
+ *
+ * Vises efter brugeren har trykket på kortet for at vælge position.
+ * Panelet glider op fra bunden og indeholder:
+ * - Antal-vælger med +/- knapper (store touch-targets til handsker)
+ * - 8 kompasretninger som runde knapper
+ * - Frivilligt note-felt
+ * - Gem/Annullér knapper
+ */
 import { useState } from "react";
 
 /** De 8 kompasretninger brugeren kan vælge */
@@ -21,10 +31,6 @@ interface AddSightingPanelProps {
   onCancel: () => void;
 }
 
-/**
- * Bottom-panel til at oprette en ny fåre-observation.
- * Viser antal-vælger (+/- knapper), 8 kompasretninger og et note-felt.
- */
 export default function AddSightingPanel({
   onSubmit,
   onCancel,
@@ -39,12 +45,11 @@ export default function AddSightingPanel({
 
   return (
     <div className="pointer-events-auto absolute bottom-0 left-0 right-0 z-[1001] rounded-t-2xl bg-white p-4 shadow-lg">
-      {/* Overskrift */}
       <h3 className="mb-3 text-center text-lg font-semibold text-stone-800">
         Merkja seyðir
       </h3>
 
-      {/* Antal-vælger */}
+      {/* Antal-vælger: store +/- knapper der er nemme at ramme med handsker */}
       <div className="mb-3">
         <label className="mb-1 block text-sm font-medium text-stone-600">
           Antal
@@ -68,7 +73,7 @@ export default function AddSightingPanel({
         </div>
       </div>
 
-      {/* Kompasretning */}
+      {/* Kompasretning — tryk for at vælge, tryk igen for at fravælge */}
       <div className="mb-3">
         <label className="mb-1 block text-sm font-medium text-stone-600">
           Átt (valfrítt)
@@ -92,7 +97,7 @@ export default function AddSightingPanel({
         </div>
       </div>
 
-      {/* Note */}
+      {/* Frivillig note */}
       <div className="mb-4">
         <label className="mb-1 block text-sm font-medium text-stone-600">
           Viðmerking (valfrítt)
@@ -106,7 +111,7 @@ export default function AddSightingPanel({
         />
       </div>
 
-      {/* Knapper */}
+      {/* Handlingsknapper */}
       <div className="flex gap-3">
         <button
           onClick={onCancel}

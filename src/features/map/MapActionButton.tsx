@@ -1,3 +1,16 @@
+/**
+ * MapActionButton — flydende "+" knap i nederste højre hjørne af kortet.
+ *
+ * Dette er et "FAB" (Floating Action Button) — et velkendt mobil-designmønster
+ * hvor en rund knap svæver over indholdet og giver hurtig adgang til hovedhandlinger.
+ *
+ * Klik på knappen åbner en undermenu med to valg:
+ * - 🐑 Merkja seyðir (opret fåre-observation)
+ * - 📍 Gev ávísing (opret ordre)
+ *
+ * Knappen roterer 45° når menuen er åben (+ → ×).
+ * 56px touch-target sikrer at knappen er nem at ramme med handsker.
+ */
 import { useState } from "react";
 
 interface MapActionButtonProps {
@@ -5,11 +18,6 @@ interface MapActionButtonProps {
   onAddOrder: () => void;
 }
 
-/**
- * Flydende "+"-knap i nederste højre hjørne.
- * Åbner en undermenu med to valg: merkja seyðir eller gev ávísing.
- * 56px touch-target for brug med handsker i regn.
- */
 export default function MapActionButton({
   onAddSighting,
   onAddOrder,
@@ -28,7 +36,7 @@ export default function MapActionButton({
 
   return (
     <div className="pointer-events-auto absolute bottom-6 right-4 z-[1001] flex flex-col items-end gap-2">
-      {/* Undermenu — vises over knappen */}
+      {/* Undermenu — vises over hovedknappen */}
       {open && (
         <div className="flex flex-col gap-2">
           <button
@@ -48,7 +56,7 @@ export default function MapActionButton({
         </div>
       )}
 
-      {/* Hoved-knap */}
+      {/* Hovedknap — roterer 45° når åben (+ bliver ×) */}
       <button
         onClick={() => setOpen(!open)}
         className={`flex h-14 w-14 items-center justify-center rounded-full text-2xl font-bold text-white shadow-lg transition-transform ${

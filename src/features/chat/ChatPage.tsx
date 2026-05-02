@@ -1,3 +1,13 @@
+/**
+ * ChatPage — gruppechat-side.
+ *
+ * Layout i fuld højde (som kortsiden) med tre sektioner:
+ * 1. Top: Gruppevælger (vælg hvilken gruppe du chatter i)
+ * 2. Midt: Beskedliste med auto-scroll til bunden
+ * 3. Bund: Input-bar til at skrive og sende beskeder
+ *
+ * Egne beskeder vises til højre (blå), andres til venstre (grå med navn).
+ */
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Spinner from "../../components/Spinner";
 import { useAuth } from "../auth/AuthContext";
@@ -5,10 +15,6 @@ import GroupSelector from "../map/GroupSelector";
 import MessageBubble from "./MessageBubble";
 import { useMessages } from "./useMessages";
 
-/**
- * Skilaboð — gruppechat-side.
- * Full-height layout med gruppevælger, beskedliste og input-bar.
- */
 export default function ChatPage() {
   const { user } = useAuth();
   const [groupId, setGroupId] = useState<string | null>(null);
@@ -17,14 +23,16 @@ export default function ChatPage() {
 
   const { messages, sendMessage } = useMessages(groupId, user?.id ?? null);
 
-  // Ref til beskedlistens bund — bruges til auto-scroll
+  // Ref til et usynligt element i bunden af beskedlisten — scroll-target
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll til bunden når nye beskeder ankommer
+  // Auto-scroll til bunden når nye beskeder ankommer.
+  // "smooth" giver en flydende animation i stedet for et brat hop.
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  /** Håndtér afsendelse af besked */
   async function handleSend(e: FormEvent) {
     e.preventDefault();
     const trimmed = input.trim();
@@ -32,7 +40,7 @@ export default function ChatPage() {
 
     setSending(true);
     const ok = await sendMessage(trimmed);
-    if (ok) setInput("");
+    if (ok) setInput("");  // Tøm inputfeltet ved succes
     setSending(false);
   }
 
@@ -40,7 +48,7 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Gruppevælger */}
+      {/* Gruppevælger — genbruges fra kortsiden */}
       <div className="border-b border-stone-200 bg-white px-4 py-3">
         <GroupSelector
           userId={user.id}
@@ -49,7 +57,7 @@ export default function ChatPage() {
         />
       </div>
 
-      {/* Beskedliste */}
+      {/* Beskedliste — scroller uafhængigt af resten af siden */}
       <div className="flex-1 overflow-y-auto px-4 py-3">
         {!groupId ? (
           <p className="py-12 text-center text-sm text-stone-400">
@@ -72,11 +80,11 @@ export default function ChatPage() {
             ))}
           </div>
         )}
-        {/* Usynligt element i bunden — scroll-target */}
+        {/* Usynligt element — scrollIntoView() peger på dette */}
         <div ref={bottomRef} />
       </div>
 
-      {/* Input-bar */}
+      {/* Input-bar — vises kun når en gruppe er valgt */}
       {groupId && (
         <form
           onSubmit={handleSend}

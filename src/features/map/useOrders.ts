@@ -1,8 +1,24 @@
+/**
+ * useOrders — hook der håndterer ordrer/ávísingar for en gruppe.
+ *
+ * En ordre er en "gå hertil"-kommando som et gruppemedlem sender til et andet.
+ * F.eks. "Gå til nordsiden af fjeldet" med en prik på kortet.
+ *
+ * Ordrer har en livscyklus (state machine):
+ *   pending → accepted → completed
+ *                      → cancelled (kan ske fra pending eller accepted)
+ *
+ * Kun "pending" og "accepted" ordrer vises på kortet.
+ * "completed" og "cancelled" filtreres automatisk væk.
+ *
+ * Mønsteret er det samme som useSheepSightings:
+ * fetch → Realtime subscription → cleanup ved unmount.
+ */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import type { Order } from "../../types/database";
 
-/** Ordre med display_names fra profiles-tabellen */
+/** Ordre beriget med navne på opretteren og den tildelte person */
 export interface OrderWithNames extends Order {
   created_by_name: string;
   assigned_to_name: string | null;
@@ -23,17 +39,11 @@ interface UseOrdersReturn {
   cancelOrder: (id: string) => Promise<boolean>;
 }
 
-/**
- * Hook der håndterer ordrer/ávísingar for en gruppe:
- * - Henter eksisterende aktive ordrer (pending/accepted)
- * - Abonnerer på Realtime-ændringer
- * - Eksponerer add/accept/complete/cancel funktioner
- */
 export function useOrders(groupId: string | null): UseOrdersReturn {
   const [orders, setOrders] = useState<OrderWithNames[]>([]);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  // Hent display_name fra profiles-tabel
+  /** Hent visningsnavn fra profiles-tabellen */
   const fetchDisplayName = useCallback(
     async (uid: string): Promise<string> => {
       const { data } = await supabase
@@ -46,7 +56,7 @@ export function useOrders(groupId: string | null): UseOrdersReturn {
     [],
   );
 
-  // Berig en ordre med navne
+  /** Berig en ordre med navne (opretter + evt. tildelt person) */
   const enrichOrder = useCallback(
     async (order: Order): Promise<OrderWithNames> => {
       const createdByName = await fetchDisplayName(order.created_by);
@@ -58,7 +68,7 @@ export function useOrders(groupId: string | null): UseOrdersReturn {
     [fetchDisplayName],
   );
 
-  // Initial fetch + Realtime subscription
+  // Hent eksisterende + abonnér på ændringer
   useEffect(() => {
     if (!groupId) {
       setOrders([]);
@@ -68,6 +78,7 @@ export function useOrders(groupId: string | null): UseOrdersReturn {
     let cancelled = false;
 
     async function fetchExisting() {
+      // Hent kun ordrer der stadig er aktive (pending/accepted)
       const { data } = await supabase
         .from("orders")
         .select("*")
@@ -87,7 +98,7 @@ export function useOrders(groupId: string | null): UseOrdersReturn {
 
     fetchExisting();
 
-    // Realtime subscription
+    // Realtime: lyt på ændringer i orders for denne gruppe
     const channel = supabase
       .channel(`orders:${groupId}`)
       .on(
@@ -109,7 +120,7 @@ export function useOrders(groupId: string | null): UseOrdersReturn {
 
           const order = payload.new as Order;
 
-          // Fjern completed/cancelled ordrer fra listen
+          // Fjern afsluttede ordrer fra kortet
           if (
             order.status === "completed" ||
             order.status === "cancelled"
@@ -120,6 +131,7 @@ export function useOrders(groupId: string | null): UseOrdersReturn {
 
           const enriched = await enrichOrder(order);
 
+          // Opdatér eksisterende eller tilføj ny
           setOrders((prev) => {
             const idx = prev.findIndex((o) => o.id === order.id);
             if (idx >= 0) {
@@ -144,7 +156,7 @@ export function useOrders(groupId: string | null): UseOrdersReturn {
     };
   }, [groupId, enrichOrder]);
 
-  // Opret ny ordre
+  /** Opret en ny ordre */
   const addOrder = useCallback(
     async (order: {
       group_id: string;
@@ -160,7 +172,7 @@ export function useOrders(groupId: string | null): UseOrdersReturn {
     [],
   );
 
-  // Opdater ordre-status
+  /** Generisk status-opdatering — bruges af accept/complete/cancel */
   const updateStatus = useCallback(
     async (id: string, status: Order["status"]): Promise<boolean> => {
       const { error } = await supabase
@@ -172,6 +184,7 @@ export function useOrders(groupId: string | null): UseOrdersReturn {
     [],
   );
 
+  // Convenience-funktioner der kalder updateStatus med den rigtige status
   const acceptOrder = useCallback(
     (id: string) => updateStatus(id, "accepted"),
     [updateStatus],

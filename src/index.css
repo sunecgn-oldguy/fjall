@@ -1,3 +1,11 @@
+/*
+ * Globale styles for Fjall-appen.
+ *
+ * Tailwind CSS importeres her — den genererer automatisk alle utility-klasser
+ * (som "bg-stone-800", "flex", "rounded" osv.) baseret på hvad der bruges i koden.
+ *
+ * De øvrige regler er globale overrides der ikke kan laves med Tailwind-klasser.
+ */
 @import "tailwindcss";
 
 body {
@@ -7,13 +15,22 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Fokusring ved tastaturnavigation — vises IKKE ved mus/touch */
+/*
+ * Fokusring ved tastaturnavigation (Tab-tast).
+ * :focus-visible vises KUN ved tastatur, IKKE ved mus/touch.
+ * Dette giver bedre UX — musbrugere slipper for blå ringe,
+ * tastaturbrugere kan stadig se hvor de er.
+ */
 :focus-visible {
   outline: 2px solid #57534e; /* stone-600 */
   outline-offset: 2px;
 }
 
-/* Leaflet-kortet skal fylde sin container */
+/*
+ * Leaflet-kortet skal fylde hele sin container.
+ * Uden dette vises kortet som 0×0 pixels da Leaflet
+ * ikke selv sætter højde/bredde.
+ */
 .leaflet-container {
   height: 100%;
   width: 100%;
