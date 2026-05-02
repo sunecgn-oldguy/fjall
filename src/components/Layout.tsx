@@ -6,6 +6,7 @@ export default function Layout() {
   const { user, loading, signOut } = useAuth();
   const { pathname } = useLocation();
 
+  // dvh = dynamic viewport height — tilpasser sig iOS Safari adresselinje
   const isFullHeight = pathname === "/kort" || pathname === "/skilabod";
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -16,7 +17,7 @@ export default function Layout() {
     }`;
 
   return (
-    <div className={`flex flex-col bg-stone-50 text-stone-900 ${isFullHeight ? "h-screen" : "min-h-screen"}`}>
+    <div className={`flex flex-col bg-stone-50 text-stone-900 ${isFullHeight ? "h-dvh" : "min-h-dvh"}`}>
       <header className="bg-stone-800 text-white">
         <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <NavLink to="/" className="text-xl font-bold tracking-tight">
