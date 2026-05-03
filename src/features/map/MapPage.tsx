@@ -233,7 +233,7 @@ export default function MapPage() {
 
       {/* Overlays oven på kortet */}
       <div className="pointer-events-none absolute inset-0 z-[1000]">
-        {/* Top: Gruppevælger + online-tæller */}
+        {/* Top: Gruppevælger + online-tæller + tur-status */}
         <div className="pointer-events-auto flex items-center gap-2 p-3">
           {user && (
             <>
@@ -247,20 +247,16 @@ export default function MapPage() {
                   {onlineCount} online
                 </span>
               )}
+              {selectedGroupId && (
+                <TripControlPanel
+                  activeTrip={activeTrip}
+                  currentUserId={user.id}
+                  onEndTrip={endTrip}
+                />
+              )}
             </>
           )}
         </div>
-
-        {/* Tur-kontrolpanel: viser optagelsesstatus */}
-        {user && selectedGroupId && (
-          <div className="flex justify-center px-3">
-            <TripControlPanel
-              activeTrip={activeTrip}
-              currentUserId={user.id}
-              onEndTrip={endTrip}
-            />
-          </div>
-        )}
 
         {/* Placerings-mode instruktion */}
         {isPlacingMode && (

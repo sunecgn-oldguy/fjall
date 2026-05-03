@@ -67,24 +67,24 @@ export default function TripControlPanel({
   const canEnd = currentUserId === activeTrip.started_by;
 
   return (
-    <div className="pointer-events-auto flex items-center gap-2 rounded-lg bg-white/95 px-3 py-2 shadow-lg backdrop-blur">
+    <div className="flex items-center gap-1.5 rounded bg-white/90 px-2 py-1 shadow backdrop-blur">
       {/* Grøn pulserende prik */}
-      <span className="relative flex h-3 w-3">
+      <span className="relative flex h-2 w-2">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-        <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
       </span>
 
-      <span className="text-sm font-medium text-stone-700">
-        Optekur... {elapsed && <span className="text-stone-500">({elapsed})</span>}
+      <span className="text-xs font-medium text-stone-600">
+        {elapsed || "0m"}
       </span>
 
       {canEnd && (
         <button
           onClick={handleEnd}
           disabled={loading}
-          className="ml-2 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white shadow active:bg-red-700 hover:bg-red-500 disabled:opacity-50"
+          className="rounded bg-red-600 px-1.5 py-0.5 text-xs font-medium text-white active:bg-red-700 hover:bg-red-500 disabled:opacity-50"
         >
-          {loading ? "..." : "Stansa"}
+          {loading ? "..." : "Stop"}
         </button>
       )}
     </div>
