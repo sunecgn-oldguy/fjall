@@ -35,7 +35,7 @@ export default function MapActionButton({
   }
 
   return (
-    <div className="pointer-events-auto absolute bottom-6 right-4 z-[1001] flex flex-col items-end gap-2">
+    <div className="pointer-events-auto absolute bottom-20 right-4 z-[1001] flex flex-col items-end gap-2">
       {/* Undermenu — vises over hovedknappen */}
       {open && (
         <div className="flex flex-col gap-2">
