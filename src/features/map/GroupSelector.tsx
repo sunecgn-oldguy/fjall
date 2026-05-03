@@ -174,14 +174,21 @@ export default function GroupSelector({
     setActionLoading(false);
   };
 
-  /** Slet en gruppe (kun opretteren kan) */
+  /** Slet en gruppe via RPC (sletter alt relateret data i rigtig rækkefølge) */
   const handleDelete = async (groupId: string) => {
     if (!window.confirm("Ert tú vís/ur? Bólkurin verður strikaður — kann ikki takast aftur.")) return;
     setActionLoading(true);
+    setError(null);
 
-    // Slet alle medlemmer først (cascade virker måske, men vær sikker)
-    await supabase.from("group_members").delete().eq("group_id", groupId);
-    await supabase.from("groups").delete().eq("id", groupId);
+    const { error: rpcError } = await supabase.rpc("delete_group", {
+      target_group_id: groupId,
+    });
+
+    if (rpcError) {
+      setError("Fekk ikki strikað bólk: " + rpcError.message);
+      setActionLoading(false);
+      return;
+    }
 
     if (selectedGroupId === groupId) {
       onSelect(null);
