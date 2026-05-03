@@ -15,6 +15,19 @@ vi.mock("./lib/supabase", () => ({
         data: { subscription: { unsubscribe: vi.fn() } },
       }),
     },
+    from: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          data: [],
+          error: null,
+        }),
+      }),
+    }),
+    channel: vi.fn().mockReturnValue({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn().mockReturnThis(),
+    }),
+    removeChannel: vi.fn(),
   },
 }));
 
@@ -35,6 +48,7 @@ vi.mock("react-leaflet", () => ({
   Circle: () => null,
   Tooltip: () => null,
   Popup: () => null,
+  Polyline: () => null,
   useMap: () => ({
     flyTo: vi.fn(),
   }),
@@ -52,14 +66,16 @@ function renderWithProviders(route: string) {
 }
 
 describe("App", () => {
-  it("vísir forsíðuna við standard rute", () => {
+  it("vísir kortsíðuna við standard rute (/)", () => {
     renderWithProviders("/");
-    expect(screen.getByText("Vælkomin til Fjall")).toBeInTheDocument();
+    expect(screen.getByTestId("map-view")).toBeInTheDocument();
   });
 
-  it("vísir kortsíðuna við /kort rute", () => {
+  it("vísir kortsíðuna við /kort (redirect til /)", () => {
     renderWithProviders("/kort");
-    expect(screen.getByTestId("map-view")).toBeInTheDocument();
+    // Navigate redirect kan give flere renders — vi tjekker bare at map-view findes
+    const mapViews = screen.getAllByTestId("map-view");
+    expect(mapViews.length).toBeGreaterThan(0);
   });
 
   it("vísir quickstart-síðuna við /login rute", () => {
@@ -70,8 +86,8 @@ describe("App", () => {
     expect(screen.getByPlaceholderText("Jógvan")).toBeInTheDocument();
   });
 
-  it("omdirigerer til login frá /bolkar utan autentisering", () => {
-    renderWithProviders("/bolkar");
+  it("omdirigerer til login frá /skilabod utan autentisering", () => {
+    renderWithProviders("/skilabod");
     // Brugeren er ikke logget ind (session = null), så ProtectedRoute
     // omdirigerer til /login — vi forventer QuickStartPage
     expect(

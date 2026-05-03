@@ -86,3 +86,25 @@ export interface Message {
   text: string;
   created_at: string;
 }
+
+/** En seyðadriv-tur startet af én bruger i én gruppe.
+ *  ended_at er null mens turen er aktiv — sættes når turen afsluttes. */
+export interface Trip {
+  id: string;
+  group_id: string;
+  started_by: string;
+  started_at: string;
+  ended_at: string | null;
+  name: string;
+}
+
+/** GPS-position optaget under en tur.
+ *  Alle gruppemedlemmer kan se hinandens rutepunkter. */
+export interface RoutePoint {
+  id: string;
+  trip_id: string;
+  user_id: string;
+  latitude: number;
+  longitude: number;
+  recorded_at: string;
+}

@@ -18,8 +18,9 @@ interface GroupMembersLayerProps {
   members: MemberLocation[];
 }
 
-/** Farvepalet til gruppemedlemmer — valgt for genkendelighed i felten */
-const MEMBER_COLORS = [
+/** Farvepalet til gruppemedlemmer — valgt for genkendelighed i felten.
+ *  Eksporteret så RoutesLayer kan genbruge samme farver til polylines. */
+export const MEMBER_COLORS = [
   "#ef4444", // rød
   "#8b5cf6", // violet
   "#f59e0b", // amber
@@ -34,8 +35,9 @@ const MEMBER_COLORS = [
  * Simpel hash-funktion der omdanner en streng til et stabilt heltal.
  * "Stabil" betyder at samme input altid giver samme output.
  * Bruges til at mappe en bruger-UUID til et farveindex.
+ * Eksporteret så RoutesLayer kan genbruge samme farvemapping.
  */
-function hashCode(str: string): number {
+export function hashCode(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = (hash * 31 + str.charCodeAt(i)) | 0; // | 0 holder det som 32-bit integer

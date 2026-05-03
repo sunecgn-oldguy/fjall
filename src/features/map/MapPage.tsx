@@ -1,20 +1,20 @@
 /**
  * MapPage — appens hovedside med det interaktive kort.
  *
- * Dette er den mest komplekse komponent i appen. Den samler:
+ * "Kortet er appen" — dette er den første side brugeren ser.
+ *
+ * Funktionalitet:
  * - GPS-position (useGeolocation)
  * - Live positionsdeling (useGroupLocations)
  * - Fåre-observationer (useSheepSightings)
  * - Ordrer/ávísingar (useOrders)
  * - Kortvisning med alle lag (MapView + layers)
- * - Overlay-UI (gruppevælger, "+"-knap, formularer)
+ * - Overlay-UI (gruppevælger med panel, TripControlPanel, "+"-knap, formularer)
+ * - Auto-start tur når gruppe + GPS er klar
  *
  * Interaktionen styres af en STATE-MASKINE (MapMode):
  *   idle → placing-sighting → sighting-form → idle
  *   idle → placing-order   → order-form    → idle
- *
- * En state-maskine sikrer at kun én interaktion er aktiv ad gangen.
- * F.eks. kan brugeren ikke oprette en observation OG en ordre samtidig.
  *
  * Farvekoder på kortet:
  * - Blå = egen position
@@ -22,8 +22,7 @@
  * - Grøn = fåre-observationer
  * - Orange = ordrer
  */
-import { useState, useCallback } from "react";
-import { Link } from "react-router";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { LatLng } from "leaflet";
 import { CircleMarker } from "react-leaflet";
 import { useAuth } from "../auth/AuthContext";
@@ -31,6 +30,9 @@ import { useGeolocation } from "./useGeolocation";
 import { useGroupLocations } from "./useGroupLocations";
 import { useSheepSightings } from "./useSheepSightings";
 import { useOrders } from "./useOrders";
+import { useActiveTrip } from "./useActiveTrip";
+import { useRouteRecorder } from "./useRouteRecorder";
+import { useRoutePoints } from "./useRoutePoints";
 import MapView from "./MapView";
 import LocationMarker from "./LocationMarker";
 import GroupMembersLayer from "./GroupMembersLayer";
@@ -41,6 +43,8 @@ import OrdersLayer from "./OrdersLayer";
 import MapActionButton from "./MapActionButton";
 import AddSightingPanel from "./AddSightingPanel";
 import AddOrderPanel from "./AddOrderPanel";
+import TripControlPanel from "./TripControlPanel";
+import RoutesLayer from "./RoutesLayer";
 
 /** De mulige tilstande for kort-interaktion */
 type MapMode =
@@ -49,6 +53,19 @@ type MapMode =
   | "sighting-form"     // Formular til observationsdata
   | "placing-order"     // Venter på at brugeren trykker på kortet (ordre)
   | "order-form";       // Formular til ordredata
+
+/**
+ * Formatterer dagens dato på færøsk, f.eks. "3. mai 2026"
+ */
+function todayFormatted(): string {
+  const months = [
+    "januar", "februar", "mars", "apríl", "mai", "juni",
+    "juli", "august", "september", "oktober", "november", "desember",
+  ];
+  const d = new Date();
+  return `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 export default function MapPage() {
   const { user } = useAuth();
   const { position, error: geoError, loading: geoLoading } = useGeolocation();
@@ -67,6 +84,37 @@ export default function MapPage() {
 
   const { orders, addOrder, acceptOrder, completeOrder, cancelOrder } =
     useOrders(selectedGroupId);
+
+  // Tur-hooks: hent/start/stop aktiv tur, optag rute, hent alles ruter
+  const { activeTrip, startTrip, endTrip } = useActiveTrip(
+    selectedGroupId,
+    user?.id ?? null,
+  );
+  useRouteRecorder(activeTrip?.id ?? null, user?.id ?? null, position);
+  const { routePoints } = useRoutePoints(activeTrip?.id ?? null);
+
+  // ------ AUTO-START TUR ------
+  // Når brugeren har valgt en gruppe, har GPS og der ingen aktiv tur er,
+  // startes en ny tur automatisk med dagens dato som navn.
+  const autoStartAttempted = useRef(false);
+
+  useEffect(() => {
+    // Nulstil flag når gruppe skiftes
+    autoStartAttempted.current = false;
+  }, [selectedGroupId]);
+
+  useEffect(() => {
+    if (
+      selectedGroupId &&
+      user &&
+      position &&
+      activeTrip === null &&
+      !autoStartAttempted.current
+    ) {
+      autoStartAttempted.current = true;
+      startTrip(todayFormatted());
+    }
+  }, [selectedGroupId, user, position, activeTrip, startTrip]);
 
   // Er kortet i placerings-mode? (lytter på tap)
   const isPlacingMode =
@@ -150,6 +198,7 @@ export default function MapPage() {
             onComplete={completeOrder}
             onCancel={cancelOrder}
           />
+          <RoutesLayer routePoints={routePoints} members={members} />
           <MapTapHandler active={isPlacingMode} onTap={handleMapTap} />
 
           {/* Preview-prik for valgt position */}
@@ -202,6 +251,17 @@ export default function MapPage() {
           )}
         </div>
 
+        {/* Tur-kontrolpanel: viser optagelsesstatus */}
+        {user && selectedGroupId && (
+          <div className="flex justify-center px-3">
+            <TripControlPanel
+              activeTrip={activeTrip}
+              currentUserId={user.id}
+              onEndTrip={endTrip}
+            />
+          </div>
+        )}
+
         {/* Placerings-mode instruktion */}
         {isPlacingMode && (
           <div className="absolute left-0 right-0 top-16 flex justify-center">
@@ -240,12 +300,12 @@ export default function MapPage() {
                 <p className="text-stone-600">
                   Rita inn fyri at deila GPS-staðseting við bólkin.
                 </p>
-                <Link
-                  to="/login"
+                <a
+                  href="/login"
                   className="mt-1 inline-block font-medium text-stone-800 underline"
                 >
                   Rita inn
-                </Link>
+                </a>
               </div>
             )}
           </div>

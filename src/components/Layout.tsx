@@ -7,9 +7,9 @@
  * - <Outlet /> hvor den aktuelle side indsættes (fra React Router)
  * - Footer (skjult på kort- og chat-siden for at spare plads)
  *
- * Navigation tilpasser sig login-status:
- * - Ikke logget ind: Forsíða, Kort, Rita inn
- * - Logget ind: Forsíða, Kort, Bólkar, Skilaboð, Útrita
+ * Navigation (forenklet — kortet er appen):
+ * - Ikke logget ind: Kort, Rita inn
+ * - Logget ind: Kort, Skilaboð, Túrar, Útrita
  */
 import { NavLink, Outlet, useLocation } from "react-router";
 import { useAuth } from "../features/auth/AuthContext";
@@ -22,7 +22,7 @@ export default function Layout() {
   // Kort og chat bruger fuld skærmhøjde (ingen scrollbar, ingen footer).
   // Vi bruger "dvh" (dynamic viewport height) i stedet for "vh" fordi
   // iOS Safari's 100vh inkluderer arealet bag adresselinjen — dvh tilpasser sig.
-  const isFullHeight = pathname === "/kort" || pathname === "/skilabod";
+  const isFullHeight = pathname === "/" || pathname === "/skilabod";
 
   // NavLink-styling: aktiv side får mørk baggrund, inaktive er lysegrå
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -42,20 +42,17 @@ export default function Layout() {
 
           <div className="flex items-center gap-4">
             <NavLink to="/" className={navLinkClass} end>
-              Forsíða
-            </NavLink>
-            <NavLink to="/kort" className={navLinkClass}>
               Kort
             </NavLink>
 
-            {/* Vis Bólkar og Skilaboð kun når brugeren er logget ind */}
+            {/* Vis Skilaboð og Túrar kun når brugeren er logget ind */}
             {user && (
               <>
-                <NavLink to="/bolkar" className={navLinkClass}>
-                  Bólkar
-                </NavLink>
                 <NavLink to="/skilabod" className={navLinkClass}>
                   Skilaboð
+                </NavLink>
+                <NavLink to="/turar" className={navLinkClass}>
+                  Túrar
                 </NavLink>
               </>
             )}

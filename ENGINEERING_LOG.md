@@ -381,3 +381,104 @@ Denne log dokumenterer alle vigtige beslutninger, ændringer og fremskridt i pro
 - `npm run test` kører 10 tests der alle består
 - Nyt flow: Navn → Byrja → Vælg grupper → Kort (2 skridt)
 - Eksisterende brugere kan stadig logge ind via email-sektionen
+
+---
+
+## 2026-05-02 — Fase 8: Rute-optagelse og turhistorik
+
+**Hvad:** Tilføjet rute-optagelse under seyðadriv-ture — alle deltageres GPS-positioner optages hvert 3. minut, vises live på kortet som farvede polylines, og gemmes til senere visning på turhistorik-siden.
+
+**Beslutninger:**
+- **Hvert 3. minut** mellem rutepunktsoptagelser — balancerer detaljeniveau vs. database-belastning. 3 min er nok til at tegne en rute i bjergterræn
+- **10-meter duplikatfiltrering** med Haversine-formel — undgår at gemme punkter når brugeren står stille
+- **Polling hvert 30. sekund** på route_points — Realtime er overkill da punkter kun tilføjes hvert 3. minut
+- **Realtime på trips** — alle skal se med det samme når en tur startes/stoppes
+- **Polyline per bruger** med samme farvesystem som GroupMembersLayer — konsistent farvemapping via UUID-hash
+- **Sticky Tooltip** på polylines — viser brugerens navn når man fører fingeren over ruten
+- **Turhistorik som scroll-side** (ikke fullscreen) — samme layout som Forsíða og Bólkar, ikke som Kort/Skilaboð
+- **Grupperet per gruppe** i turhistorik — overskuelig visning når brugeren er medlem af flere grupper
+- **Read-only MapView** til historisk rute-visning — genbruger den eksisterende MapView-komponent
+- **hashCode + MEMBER_COLORS eksporteret** fra GroupMembersLayer — RoutesLayer genbruger dem for konsistente farver
+- **confirm-dialog** ved tur-stop — forhindrer utilsigtet afslutning, da alle deltagere påvirkes
+
+**Nye filer (7 stk):**
+- `supabase/migrations/005_trips_and_route_points.sql` — trips + route_points tabeller med RLS, indekser og Realtime
+- `src/features/map/useActiveTrip.ts` — Hook: hent/start/stop aktiv tur med Realtime subscription
+- `src/features/map/useRouteRecorder.ts` — Hook: optag GPS hvert 3. minut under aktiv tur (med duplikatfiltrering)
+- `src/features/map/useRoutePoints.ts` — Hook: hent rutepunkter per bruger med 30s polling
+- `src/features/map/TripControlPanel.tsx` — Start/stop tur-knap med navnefelt og varighedsindikator
+- `src/features/map/RoutesLayer.tsx` — Tegn polylines per bruger med farvemapping fra GroupMembersLayer
+- `src/features/trips/TripHistoryPage.tsx` — Oversigt over afsluttede ture, klik → vis ruter på kort
+
+**Ændrede filer (5 stk):**
+- `src/types/database.ts` — +Trip og +RoutePoint interfaces
+- `src/features/map/GroupMembersLayer.tsx` — Eksporteret hashCode() og MEMBER_COLORS
+- `src/features/map/MapPage.tsx` — Integreret useActiveTrip, useRouteRecorder, useRoutePoints, TripControlPanel og RoutesLayer
+- `src/App.tsx` — +beskyttet rute `/turar` → TripHistoryPage
+- `src/components/Layout.tsx` — +nav-link "Túrar" (kun for indloggede brugere)
+
+**Database-design:**
+- `trips` — id (uuid PK), group_id (FK → groups), started_by (FK → auth.users), started_at, ended_at (null = aktiv), name
+- `route_points` — id (uuid PK), trip_id (FK → trips), user_id (FK → auth.users), latitude, longitude, recorded_at
+- Indeks: `(group_id, started_at desc)` på trips, `(trip_id, user_id, recorded_at)` på route_points
+- RLS: gruppemedlemmer kan se ture + rutepunkter, kun egne punkter kan indsættes, kun opretteren kan afslutte tur
+- Realtime på trips (ikke på route_points — polling er tilstrækkeligt)
+
+**Kræver manuel handling i Supabase Dashboard:**
+- Kør `005_trips_and_route_points.sql` i SQL Editor
+
+**Verifikation:**
+- `npm run build` bygger uden fejl
+- `npm run test` kører 10 tests der alle består
+- Turpanel vises på kortet med start/stop-knap
+- Rutepunkter optages automatisk under aktiv tur
+- Polylines tegnes per bruger med konsistente farver
+- Turhistorik viser afsluttede ture med kort og deltagerliste
+
+---
+
+## 2026-05-03 — Fase 9: "Kortet er appen" — forenklet flow
+
+**Hvad:** Fundamental forenkling af brugerflowet. Kortet er nu forsiden. Grupper administreres direkte fra kortet. Ruter startes automatisk. RLS-bugs fixet.
+
+**Design-princip:** "Kortet er appen" — fjern alt mellem brugeren og kortet. Brugeren ser kortet med det samme efter login.
+
+**Gammelt flow:** Login → Forsíða → Bólkar → vælg grupper → Kort (4 skridt)
+**Nyt flow:** Login → Kort (1 skridt)
+
+**Beslutninger:**
+- **`/` → MapPage** — kortet er det første brugeren ser. Ingen velkomstside mere
+- **`/kort` redirect** til `/` — bagudkompatibilitet for eventuelle bookmarks
+- **Bólkar-siden fjernet** — al gruppestyring sker direkte på kortet via GroupSelector-panelet
+- **GroupSelector udvidet** til et panel med opret/join/leave/delete funktionalitet
+- **Auto-start tur** — når brugeren har gruppe + GPS, startes en tur automatisk med dagens dato
+- **TripControlPanel forenklet** — ingen navne-input (navn sættes automatisk), kun grøn prik + "Optekur..." + stansa-knap
+- **RLS-fix** — brugere kan nu forlade grupper + oprettere kan slette grupper
+- **Navigation reduceret** til: Kort | Skilaboð | Túrar | Útrita
+
+**Slettede filer (3 stk):**
+- `src/features/drive/HomePage.tsx` — erstattet af direkte kort
+- `src/features/groups/GroupsPage.tsx` — erstattet af GroupSelector-panel
+- `src/features/groups/CreateGroupForm.tsx` — logikken er nu i GroupSelector
+
+**Nye filer (1 stk):**
+- `supabase/migrations/006_fix_group_policies.sql` — DELETE-policies for group_members + groups
+
+**Ændrede filer (5 stk):**
+- `src/App.tsx` — `/` → MapPage, fjernet forsíða + bólkar ruter, tilføjet /kort redirect
+- `src/components/Layout.tsx` — forenklet nav, `isFullHeight` for `/` i stedet for `/kort`
+- `src/features/map/GroupSelector.tsx` — komplet omskrivning med panel (opret/join/leave/delete)
+- `src/features/map/MapPage.tsx` — auto-start tur via useEffect, fjernet Link-import
+- `src/features/map/TripControlPanel.tsx` — fjernet navne-input og start-knap, kun optagelsesstatus
+- `src/App.test.tsx` — tilpasset til nye ruter
+
+**Kræver manuel handling i Supabase Dashboard:**
+- Kør `006_fix_group_policies.sql` i SQL Editor
+
+**Verifikation:**
+- `npm run build` bygger uden fejl
+- `npm run test` kører 10 tests der alle består
+- Kortet vises direkte ved `/`
+- ⚙-knap åbner panel med gruppestyring
+- Auto-start tur fungerer når gruppe + GPS er klar
+- Leave/delete-funktionalitet tilgængelig i panelet

@@ -6,37 +6,37 @@
  * der ændrer sig, mens headeren og navigationen forbliver.
  *
  * Ruter:
- *   /         → Forsíða (velkomstside)
+ *   /         → MapPage (kortet er appen)
  *   /login    → QuickStartPage (skriv navn eller email-login)
- *   /kort     → Interaktivt kort med GPS
- *   /bolkar   → Gruppevalg (kræver login)
  *   /skilabod → Gruppechat (kræver login)
+ *   /turar    → Turhistorik (kræver login)
  *
  * Layout wrapperer alle ruter og giver dem fælles header, navigation og footer.
- * ProtectedRoute sikrer at /bolkar og /skilabod kræver login.
+ * ProtectedRoute sikrer at /skilabod og /turar kræver login.
  */
-import { Routes, Route } from "react-router";
+import { Routes, Route, Navigate } from "react-router";
 import Layout from "./components/Layout";
-import HomePage from "./features/drive/HomePage";
 import MapPage from "./features/map/MapPage";
 import QuickStartPage from "./features/auth/QuickStartPage";
 import ProtectedRoute from "./features/auth/ProtectedRoute";
-import GroupsPage from "./features/groups/GroupsPage";
 import ChatPage from "./features/chat/ChatPage";
+import TripHistoryPage from "./features/trips/TripHistoryPage";
 
 export default function App() {
   return (
     <Routes>
       {/* Layout er den ydre ramme — header, nav, footer */}
       <Route element={<Layout />}>
-        <Route index element={<HomePage />} />
+        <Route index element={<MapPage />} />
         <Route path="login" element={<QuickStartPage />} />
-        <Route path="kort" element={<MapPage />} />
+
+        {/* /kort redirect til / for bagudkompatibilitet */}
+        <Route path="kort" element={<Navigate to="/" replace />} />
 
         {/* Beskyttede ruter — ProtectedRoute omdirigerer til /login hvis ikke logget ind */}
         <Route element={<ProtectedRoute />}>
-          <Route path="bolkar" element={<GroupsPage />} />
           <Route path="skilabod" element={<ChatPage />} />
+          <Route path="turar" element={<TripHistoryPage />} />
         </Route>
       </Route>
     </Routes>
